@@ -77,6 +77,8 @@ Hay tres formas, elige la que prefieras:
 2. En **Settings → Environment Variables** añade `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Production y Preview).
 3. Despliega. Si cambias las variables después, **vuelve a desplegar**: las `NEXT_PUBLIC_*` se incrustan al compilar.
 
+> **Error "No Output Directory named "public" found"**: el proyecto de Vercel no se ha detectado como Next.js (pasa si se importó el repo antes de tener código). El [`vercel.json`](vercel.json) ya fija `"framework": "nextjs"`. Si aun así falla, en **Settings → Build and Deployment** pon *Framework Preset: Next.js* y quita cualquier override de *Output Directory*.
+
 No hace falta nada más: todas las páginas se renderizan en cada petición (los datos cambian cada mañana) y "hoy" se calcula siempre en hora de Madrid, aunque Vercel corra en UTC.
 
 ---
