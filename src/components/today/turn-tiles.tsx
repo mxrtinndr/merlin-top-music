@@ -29,7 +29,7 @@ export function TurnTiles({
             {presenterIsMe && <span className="text-brand-500"> (tú)</span>}
           </p>
           {presenterIsMe && !next && (
-            <p className="text-sm font-semibold text-orange-600">¡Hoy es tu turno de recomendar una canción! 🎤</p>
+            <p className="text-sm font-semibold text-brand-500">¡Hoy es tu turno de recomendar una canción! 🎤</p>
           )}
         </div>
       </div>

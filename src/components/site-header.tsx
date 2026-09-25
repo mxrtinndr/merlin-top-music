@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { APP_NAME, APP_TAGLINE } from "@/lib/config";
 import { UserMenu } from "@/components/identity/user-menu";
@@ -5,23 +6,52 @@ import { DesktopNav } from "@/components/site-nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { TurnBadge } from "@/components/today/turn-badge";
 
+/** Proporción del logotipo oficial (viewBox 2907 × 878). */
+const LOGO_WIDTH = 2907;
+const LOGO_HEIGHT = 878;
+
+/**
+ * Logotipo de Merlín Software (manual de estilo 2025: azul índigo, y blanco
+ * sobre fondo oscuro) y, separado por una línea, el nombre de la app.
+ */
 export function Logo() {
   return (
-    <Link href="/" className="group flex items-center gap-2.5" aria-label={`${APP_NAME}, inicio`}>
-      <span className="relative flex size-11 items-center justify-center rounded-xl bg-linear-to-br from-brand-500 to-deep-800 shadow-md shadow-deep-700/25 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105">
-        {/* Mini ecualizador */}
-        <span className="flex h-5 items-end gap-[3px]" aria-hidden>
-          {[0, 0.25, 0.5].map((delay) => (
-            <span
-              key={delay}
-              className="h-full w-[3px] origin-bottom rounded-full bg-white group-hover:animate-eq"
-              style={{ animationDelay: `${delay}s`, transform: `scaleY(${0.5 + delay})` }}
-            />
-          ))}
+    <Link href="/" className="group flex items-center gap-3 md:gap-4" aria-label={`${APP_NAME}, inicio`}>
+      {/* SVG vectorial ya optimizado: no hace falta el optimizador de Next. */}
+      <Image
+        src="/brand/merlin-logo-blue.svg"
+        alt=""
+        width={LOGO_WIDTH}
+        height={LOGO_HEIGHT}
+        unoptimized
+        priority
+        className="h-9 w-auto dark:hidden md:h-11"
+      />
+      <Image
+        src="/brand/merlin-logo-white.svg"
+        alt=""
+        width={LOGO_WIDTH}
+        height={LOGO_HEIGHT}
+        unoptimized
+        priority
+        className="hidden h-9 w-auto dark:block md:h-11"
+      />
+      {/* En móvil no cabe: solo el logotipo. */}
+      <span className="hidden h-8 w-px bg-slate-200 sm:block md:h-10" aria-hidden />
+      <span className="hidden leading-tight sm:block">
+        <span className="flex items-end gap-1.5 font-display text-xl font-bold tracking-tight text-brand-700 md:text-2xl">
+          FM
+          {/* Mini ecualizador: se anima al pasar el ratón */}
+          <span className="mb-1.5 flex h-3.5 items-end gap-[2px]" aria-hidden>
+            {[0, 0.25, 0.5].map((delay) => (
+              <span
+                key={delay}
+                className="h-full w-[3px] origin-bottom rounded-full bg-brand-400 group-hover:animate-eq"
+                style={{ animationDelay: `${delay}s`, transform: `scaleY(${0.5 + delay})` }}
+              />
+            ))}
+          </span>
         </span>
-      </span>
-      <span className="leading-tight">
-        <span className="block font-display text-xl font-bold tracking-tight text-brand-800 md:text-2xl">{APP_NAME}</span>
         <span className="hidden text-xs font-medium text-slate-500 sm:block">{APP_TAGLINE}</span>
       </span>
     </Link>

@@ -39,6 +39,25 @@ export function startOfWeekISO(iso: string): string {
   return toISODate(date);
 }
 
+/** Primer día del mes que queda `months` meses antes (negativo) o después. */
+export function addMonthsISO(monthStart: string, months: number): string {
+  const date = parseISODate(monthStart);
+  date.setUTCDate(1);
+  date.setUTCMonth(date.getUTCMonth() + months);
+  return toISODate(date);
+}
+
+/** Días que tiene el mes de la fecha dada. */
+export function daysInMonth(iso: string): number {
+  const [y, m] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+/** 0 = lunes … 6 = domingo. */
+export function weekdayIndex(iso: string): number {
+  return (parseISODate(iso).getUTCDay() + 6) % 7;
+}
+
 export function startOfMonthISO(iso: string): string {
   return `${iso.slice(0, 7)}-01`;
 }

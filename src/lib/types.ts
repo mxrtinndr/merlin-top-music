@@ -6,6 +6,8 @@ export type Member = {
   /** URL pública de la foto de perfil (Supabase Storage). Sin foto se usa el emoji. */
   avatar_url: string | null;
   has_pin: boolean;
+  /** Acceso a /admin. Solo se cambia por SQL. */
+  is_admin: boolean;
   active: boolean;
   created_at: string;
 };

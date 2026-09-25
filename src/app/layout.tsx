@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Poppins } from "next/font/google";
+import { Inter, Rubik } from "next/font/google";
 import { unstable_rethrow } from "next/navigation";
 import { connection } from "next/server";
 import { APP_NAME, APP_TAGLINE, COMPANY_NAME } from "@/lib/config";
@@ -16,7 +16,8 @@ import { NominationNotifier } from "@/components/notifications/nomination-notifi
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
-const poppins = Poppins({ variable: "--font-poppins", subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
+// Tipografías del manual de estilo: Rubik (corporativa) e Inter (secundaria).
+const rubik = Rubik({ variable: "--font-rubik", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: { default: `${APP_NAME} · ${APP_TAGLINE}`, template: `%s · ${APP_NAME}` },
@@ -25,8 +26,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#1B3A6B" },
-    { media: "(prefers-color-scheme: dark)", color: "#0B1220" },
+    { media: "(prefers-color-scheme: light)", color: "#00416A" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E171D" },
   ],
 };
 
@@ -34,7 +35,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   await connection(); // todo es dinámico: los datos cambian cada mañana
   return (
     // suppressHydrationWarning: el script del tema añade la clase "dark" antes de hidratar.
-    <html lang="es" className={`${inter.variable} ${poppins.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="es" className={`${inter.variable} ${rubik.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         {/* En línea y en <head>: se ejecuta antes de pintar, así no hay destello del tema claro. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />

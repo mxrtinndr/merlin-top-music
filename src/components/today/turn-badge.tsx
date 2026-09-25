@@ -17,7 +17,7 @@ export function TurnBadge({ turnMemberId, variant }: { turnMemberId: string | nu
     return (
       <Link
         href="/"
-        className="block bg-linear-to-r from-amber-400 to-orange-500 px-4 py-2 text-center text-sm font-bold text-white sm:hidden"
+        className="block bg-sun px-4 py-2 text-center text-sm font-bold text-deep-700 sm:hidden"
       >
         🎤 {MESSAGE}
       </Link>
@@ -28,7 +28,7 @@ export function TurnBadge({ turnMemberId, variant }: { turnMemberId: string | nu
     <Link
       href="/"
       title={MESSAGE}
-      className="hidden shrink-0 items-center gap-1.5 rounded-full bg-linear-to-r from-amber-400 to-orange-500 px-3 py-1.5 text-sm font-bold text-white shadow-sm shadow-orange-500/30 transition hover:brightness-105 animate-pop sm:flex"
+      className="hidden shrink-0 items-center gap-1.5 rounded-full bg-sun px-3 py-1.5 text-sm font-bold text-deep-700 shadow-sm shadow-deep-700/15 transition hover:brightness-95 animate-pop sm:flex"
     >
       <span aria-hidden>🎤</span>
       <span className="lg:hidden">¡Te toca!</span>
