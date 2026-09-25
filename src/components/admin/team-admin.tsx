@@ -16,7 +16,7 @@ import { MemberEditForm } from "@/components/member-edit-form";
 import { emptyMemberValue, MemberFields, toDraft, type MemberFormValue } from "@/components/member-fields";
 import { useIdentity } from "@/components/identity/identity-provider";
 
-const EMPTY = emptyMemberValue({ emoji: "🎧", color: "#2E6FF2" });
+const EMPTY = emptyMemberValue({ emoji: "🎧", color: "#0470B3" });
 
 export function TeamAdmin() {
   const { members, currentMember } = useIdentity();

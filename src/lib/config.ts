@@ -11,8 +11,8 @@ export const MEMBER_EMOJIS = [
 ] as const;
 
 export const MEMBER_COLORS = [
-  "#2E6FF2", "#1E4C8C", "#0EA5E9", "#14B8A6",
-  "#22C55E", "#F59E0B", "#F43F5E", "#8B5CF6",
+  "#0470B3", "#00416A", "#0098F2", "#14B8A6",
+  "#22C55E", "#F59E0B", "#D70C0F", "#8B5CF6",
 ] as const;
 
 /** Quién ha hecho la app (pie de página), con enlaces a sus perfiles. */
