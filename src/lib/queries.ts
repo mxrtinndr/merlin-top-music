@@ -51,6 +51,32 @@ export async function getLatestPickBefore(date: string): Promise<DailyPick | nul
   );
 }
 
+/** La canción más reciente: su nominación dice a quién le toca presentar. */
+export async function getLatestPick(): Promise<DailyPick | null> {
+  await connection();
+  return unwrap(
+    await getSupabase()
+      .from("daily_picks_summary")
+      .select(PICK_COLUMNS)
+      .order("date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  );
+}
+
+/** Canciones entre dos fechas (incluidas), de la más antigua a la más reciente. */
+export async function getPicksBetween(from: string, to: string): Promise<DailyPick[]> {
+  await connection();
+  return unwrap(
+    await getSupabase()
+      .from("daily_picks_summary")
+      .select(PICK_COLUMNS)
+      .gte("date", from)
+      .lte("date", to)
+      .order("date"),
+  );
+}
+
 export type PickOrder = "recientes" | "mejores" | "peores";
 
 export async function getPicks(order: PickOrder): Promise<DailyPick[]> {
@@ -68,6 +94,20 @@ export async function getPicks(order: PickOrder): Promise<DailyPick[]> {
       .limit(20);
   }
   return unwrap(await query);
+}
+
+/** Canciones mejor puntuadas desde una fecha (null = histórico completo). */
+export async function getTopPicks(from: string | null, limit = 10): Promise<DailyPick[]> {
+  await connection();
+  let query = getSupabase().from("daily_picks_summary").select(PICK_COLUMNS).gt("ratings_count", 0);
+  if (from) query = query.gte("date", from);
+  return unwrap(
+    await query
+      .order("avg_score", { ascending: false })
+      .order("ratings_count", { ascending: false })
+      .order("date", { ascending: false })
+      .limit(limit),
+  );
 }
 
 export async function getRatingsForPick(pickId: string): Promise<Rating[]> {
