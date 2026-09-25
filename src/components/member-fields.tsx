@@ -4,11 +4,12 @@ import { useRef, useState } from "react";
 import { Camera, LoaderCircle, Trash2 } from "lucide-react";
 import { MEMBER_COLORS, MEMBER_EMOJIS } from "@/lib/config";
 import { cn } from "@/lib/cn";
-import { processAvatar, type ProcessedPhoto } from "@/lib/image";
+import { loadPhoto, type ProcessedPhoto } from "@/lib/image";
 import type { MemberDraft } from "@/lib/mutations";
 import type { Member, MemberInput } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/field";
+import { AvatarCropper } from "@/components/avatar-cropper";
 import { MemberAvatar } from "@/components/member-avatar";
 
 /** Estado del formulario de miembro: datos + foto actual o nueva pendiente de subir. */
@@ -52,6 +53,8 @@ export function MemberFields({
   const fileInput = useRef<HTMLInputElement>(null);
   const [processing, setProcessing] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
+  // Foto recién elegida, pendiente de encuadrar.
+  const [cropping, setCropping] = useState<ImageBitmap | null>(null);
 
   const previewUrl = value.photo?.previewUrl ?? value.avatar_url;
   const hasPhoto = previewUrl !== null;
@@ -61,7 +64,7 @@ export function MemberFields({
     setProcessing(true);
     setPhotoError(null);
     try {
-      onChange({ ...value, photo: await processAvatar(file) });
+      setCropping(await loadPhoto(file));
     } catch (error) {
       setPhotoError(error instanceof Error ? error.message : "No se pudo usar esa imagen.");
     } finally {
@@ -69,9 +72,24 @@ export function MemberFields({
     }
   };
 
+  const closeCropper = () => {
+    cropping?.close();
+    setCropping(null);
+  };
+
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-4">
+      {cropping && (
+        <AvatarCropper
+          bitmap={cropping}
+          onCancel={closeCropper}
+          onConfirm={(photo) => {
+            onChange({ ...value, photo });
+            closeCropper();
+          }}
+        />
+      )}
+      <div className={cn("flex items-center gap-4", cropping && "hidden")}>
         <button
           type="button"
           onClick={() => fileInput.current?.click()}
@@ -83,7 +101,7 @@ export function MemberFields({
             size="xl"
             className="transition group-hover:brightness-95"
           />
-          <span className="absolute -bottom-0.5 -right-0.5 flex size-7 items-center justify-center rounded-full bg-brand-500 text-white shadow-md ring-2 ring-white transition group-hover:bg-brand-600">
+          <span className="absolute -bottom-0.5 -right-0.5 flex size-7 items-center justify-center rounded-full bg-brand-500 text-white shadow-md ring-2 ring-surface transition group-hover:bg-deep-600">
             {processing ? <LoaderCircle className="size-3.5 animate-spin" /> : <Camera className="size-3.5" />}
           </span>
         </button>
