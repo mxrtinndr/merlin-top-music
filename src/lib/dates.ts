@@ -58,6 +58,18 @@ export function weekdayIndex(iso: string): number {
   return (parseISODate(iso).getUTCDay() + 6) % 7;
 }
 
+/** Lunes a viernes: la canción del día solo se pone en días laborables. */
+export function isWorkday(iso: string): boolean {
+  return weekdayIndex(iso) < 5;
+}
+
+/** Siguiente día laborable tras la fecha dada: después del viernes va el lunes. */
+export function nextWorkdayISO(iso: string): string {
+  let date = addDaysISO(iso, 1);
+  while (!isWorkday(date)) date = addDaysISO(date, 1);
+  return date;
+}
+
 export function startOfMonthISO(iso: string): string {
   return `${iso.slice(0, 7)}-01`;
 }
@@ -71,6 +83,13 @@ function format(iso: string, options: Intl.DateTimeFormatOptions): string {
 /** "miércoles, 24 de septiembre" */
 export function formatLongDate(iso: string): string {
   return format(iso, { weekday: "long", day: "numeric", month: "long" });
+}
+
+/** Cuándo cae una fecha vista desde otra: "hoy", "mañana" o "el lunes". */
+export function relativeDayLabel(iso: string, from: string): string {
+  if (iso === from) return "hoy";
+  if (iso === addDaysISO(from, 1)) return "mañana";
+  return `el ${format(iso, { weekday: "long" })}`;
 }
 
 /** "24 sept 2026" */

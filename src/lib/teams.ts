@@ -2,6 +2,7 @@
 // Se configura con TEAMS_WEBHOOK_URL: la URL de un flujo de Teams
 // "Publicar en un canal cuando se reciba una solicitud de webhook".
 
+import { nextWorkdayISO, relativeDayLabel } from "./dates";
 import type { DailyPick, Member } from "./types";
 
 export const teamsWebhookUrl = process.env.TEAMS_WEBHOOK_URL;
@@ -17,7 +18,10 @@ export function newPickCard(pick: DailyPick, presenter: Member | undefined, next
     text(`**${presenter?.name ?? "Alguien"}** ha recomendado **${pick.song_title}** de ${pick.song_artist}.`),
   ];
   if (pick.presenter_comment) body.push(text(`“${pick.presenter_comment}”`, { isSubtle: true }));
-  if (next) body.push(text(`🎤 Nominación para el siguiente turno: **${next.name}**. ¡Ve pensando tu canción!`));
+  if (next) {
+    const turnDay = relativeDayLabel(nextWorkdayISO(pick.date), pick.date);
+    body.push(text(`🎤 Nominación para el siguiente turno (${turnDay}): **${next.name}**. ¡Ve pensando tu canción!`));
+  }
 
   const actions = [{ type: "Action.OpenUrl", title: "Escuchar y votar", url: appUrl }];
   if (pick.song_url) actions.push({ type: "Action.OpenUrl", title: "Abrir en Spotify", url: pick.song_url });

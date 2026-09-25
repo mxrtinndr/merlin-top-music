@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { formatLongDate } from "@/lib/dates";
+import { formatLongDate, isWorkday, nextWorkdayISO, relativeDayLabel } from "@/lib/dates";
 import type { DailyPick, Member, Rating } from "@/lib/types";
 import { useRefreshOnFocus } from "@/lib/use-refresh-on-focus";
 import { Card, Eyebrow } from "@/components/ui/card";
@@ -47,6 +47,10 @@ export function TodayView({
   const presenter = todayPick ? memberById(todayPick.presenter_id) : nominated?.active ? nominated : undefined;
   const next = todayPick ? memberById(todayPick.next_presenter_id) : undefined;
   const viewingToday = selectedDate === today;
+  // Solo se presenta de lunes a viernes: el finde, quien está nominada presenta el lunes.
+  const workday = isWorkday(today);
+  const presenterDay = todayPick || workday ? "hoy" : relativeDayLabel(nextWorkdayISO(today), today);
+  const nextDay = relativeDayLabel(nextWorkdayISO(today), today);
 
   return (
     <div className="space-y-6">
@@ -63,7 +67,13 @@ export function TodayView({
         </h1>
       </div>
 
-      <TurnTiles presenter={presenter} next={next} currentMemberId={currentMember?.id} />
+      <TurnTiles
+        presenter={presenter}
+        next={next}
+        presenterDay={presenterDay}
+        nextDay={nextDay}
+        currentMemberId={currentMember?.id}
+      />
 
       <section className="space-y-3" aria-label="Canciones de esta semana">
         <WeekNav today={today} weekStart={weekStart} selectedDate={selectedDate} weekPicks={weekPicks} />
@@ -78,7 +88,7 @@ export function TodayView({
         {pick ? (
           <PickDetail key={pick.id} pick={pick} ratings={ratings} editable={viewingToday} showDate={!viewingToday} />
         ) : (
-          <NoPickYet today={today} presenter={presenter} />
+          <NoPickYet today={today} presenter={presenter} workday={workday} />
         )}
       </section>
 
@@ -87,11 +97,13 @@ export function TodayView({
   );
 }
 
-function NoPickYet({ today, presenter }: { today: string; presenter: Member | undefined }) {
+function NoPickYet({ today, presenter, workday }: { today: string; presenter: Member | undefined; workday: boolean }) {
   const { currentMember, ready, openPicker } = useIdentity();
   const [takingOver, setTakingOver] = useState(false);
 
   if (!ready) return <Card className="h-72 animate-pulse bg-surface/60" aria-busy="true" />;
+
+  if (!workday) return <Weekend presenter={presenter} isMe={!!currentMember && presenter?.id === currentMember.id} />;
 
   const isMyTurn = currentMember !== null && (presenter?.id === currentMember.id || !presenter || takingOver);
 
@@ -152,6 +164,25 @@ function NoPickYet({ today, presenter }: { today: string; presenter: Member | un
           )
         )}
       </div>
+    </Card>
+  );
+}
+
+function Weekend({ presenter, isMe }: { presenter: Member | undefined; isMe: boolean }) {
+  return (
+    <Card className="px-6 py-12 text-center animate-rise">
+      <p className="text-5xl" aria-hidden>
+        🌴
+      </p>
+      <h2 className="mt-4 text-xl font-semibold text-brand-800">Es fin de semana</h2>
+      <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">
+        La canción del día vuelve el lunes.{" "}
+        {isMe
+          ? "Te toca a ti: ve pensando qué vas a poner 🎶"
+          : presenter
+            ? `Presenta ${presenter.name}.`
+            : "Quien llegue primero estrena la semana."}
+      </p>
     </Card>
   );
 }

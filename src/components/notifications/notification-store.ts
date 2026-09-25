@@ -1,14 +1,29 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 
 // Preferencia de avisos de escritorio: el permiso lo guarda el navegador y
 // "silenciado" lo guardamos nosotros, para poder apagarlos sin ir a los ajustes.
+// Qué tipos de aviso quieres también se guarda aquí, en este navegador.
 
 const MUTED_KEY = "merlin-fm:notifications-muted";
-const NOTIFIED_KEY_PREFIX = "merlin-fm:notified-pick:";
+const PREFS_KEY = "merlin-fm:notification-prefs";
 
 export type NotificationStatus = "unsupported" | "default" | "denied" | "enabled" | "muted";
+
+/** nomination: te han nominado · turn: hoy te toca · newPick: hay canción nueva que puntuar. */
+export type NotificationKind = "nomination" | "turn" | "newPick";
+export type NotificationPrefs = Record<NotificationKind, boolean>;
+
+const DEFAULT_PREFS: NotificationPrefs = { nomination: true, turn: true, newPick: true };
+
+// Qué evento se avisó por última vez, por tipo y miembro (para no repetir).
+// La nominación conserva la clave antigua para no repetir avisos ya dados.
+const NOTIFIED_KEY_PREFIX: Record<NotificationKind, string> = {
+  nomination: "merlin-fm:notified-pick:",
+  turn: "merlin-fm:notified-turn:",
+  newPick: "merlin-fm:notified-new-pick:",
+};
 
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((listener) => listener());
@@ -67,20 +82,56 @@ export function muteNotifications() {
   emit();
 }
 
-/** Canción por la que ya avisamos a este miembro (para no repetir el aviso). */
-export function readNotifiedPick(memberId: string): string | null {
-  return readItem(NOTIFIED_KEY_PREFIX + memberId);
+function parsePrefs(raw: string | null): NotificationPrefs {
+  if (!raw) return DEFAULT_PREFS;
+  try {
+    return { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<NotificationPrefs>) };
+  } catch {
+    return DEFAULT_PREFS;
+  }
 }
 
-export function writeNotifiedPick(memberId: string, pickId: string) {
-  writeItem(NOTIFIED_KEY_PREFIX + memberId, pickId);
+/** Qué tipos de aviso quiere recibir quien usa este navegador. */
+export function useNotificationPrefs(): NotificationPrefs {
+  // La instantánea es el texto guardado (estable entre lecturas); se parsea aparte.
+  const raw = useSyncExternalStore<string | null>(subscribe, () => readItem(PREFS_KEY), () => null);
+  return useMemo(() => parsePrefs(raw), [raw]);
 }
 
-/** Muestra un aviso de escritorio si están activados. Al pulsarlo, trae la app al frente. */
-export function showNotification(
-  title: string,
-  options: { body: string; tag: string; icon?: string; onClick?: () => void },
-): boolean {
+export function setNotificationPref(kind: NotificationKind, enabled: boolean) {
+  writeItem(PREFS_KEY, JSON.stringify({ ...parsePrefs(readItem(PREFS_KEY)), [kind]: enabled }));
+  emit();
+}
+
+/** Evento (canción o fecha) por el que ya avisamos a este miembro. */
+export function readNotified(kind: NotificationKind, memberId: string): string | null {
+  return readItem(NOTIFIED_KEY_PREFIX[kind] + memberId);
+}
+
+export function writeNotified(kind: NotificationKind, memberId: string, eventKey: string) {
+  writeItem(NOTIFIED_KEY_PREFIX[kind] + memberId, eventKey);
+}
+
+type NotificationOptions = { body: string; tag: string; icon?: string; onClick?: () => void };
+
+/**
+ * Muestra un aviso de escritorio si están activados y ese tipo no está apagado.
+ * Al pulsarlo, trae la app al frente.
+ */
+export function showNotification(kind: NotificationKind, title: string, options: NotificationOptions): boolean {
+  if (!parsePrefs(readItem(PREFS_KEY))[kind]) return false;
+  return display(title, options);
+}
+
+/** Aviso de prueba desde Notificaciones: ignora los tipos, pero respeta el interruptor general. */
+export function showTestNotification(): boolean {
+  return display("Prueba de Merlin FM 🎶", {
+    body: "¡Funciona! Así te llegarán los avisos de canciones, nominaciones y turnos.",
+    tag: "test",
+  });
+}
+
+function display(title: string, options: NotificationOptions): boolean {
   if (readStatus() !== "enabled") return false;
   const { onClick, ...init } = options;
   try {

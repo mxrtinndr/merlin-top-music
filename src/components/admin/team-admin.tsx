@@ -8,6 +8,7 @@ import { adminClearPin, errorMessage, saveMember, updateMember } from "@/lib/mut
 import type { Member } from "@/lib/types";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { FormError } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { ShowMoreList } from "@/components/ui/show-more";
@@ -181,44 +182,10 @@ function MemberRow({ member, isMe, onEdit }: { member: Member; isMe: boolean; on
           <Button variant="ghost" size="sm" onClick={onEdit} aria-label={`Editar a ${member.name}`}>
             <Pencil className="size-3.5" />
           </Button>
-          <Switch checked={member.active} onChange={toggleActive} disabled={busy} label={`${member.name} activo`} />
+          <Switch checked={member.active} onChange={toggleActive} disabled={busy} label={`${member.name} activo`} className="ml-1" />
         </div>
       </div>
       {error && <FormError message={error} />}
     </li>
-  );
-}
-
-function Switch({
-  checked,
-  onChange,
-  disabled,
-  label,
-}: {
-  checked: boolean;
-  onChange: () => void;
-  disabled?: boolean;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={onChange}
-      disabled={disabled}
-      className={cn(
-        "relative ml-1 h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50",
-        checked ? "bg-brand-500" : "bg-slate-300",
-      )}
-    >
-      <span
-        className={cn(
-          "absolute left-0.5 top-0.5 size-5 rounded-full bg-surface shadow transition-transform",
-          checked && "translate-x-5",
-        )}
-      />
-    </button>
   );
 }
