@@ -37,7 +37,7 @@ async function run<T>(
   return data as T;
 }
 
-const MEMBER_COLUMNS = "id, name, emoji, color, avatar_url, has_pin, active, created_at";
+const MEMBER_COLUMNS = "id, name, emoji, color, avatar_url, has_pin, is_admin, active, created_at";
 
 export function createMember(input: MemberInput): Promise<Member> {
   return run(
@@ -149,8 +149,17 @@ export async function setPin(
   );
 }
 
-export async function adminClearPin(memberId: string): Promise<void> {
-  await run(getSupabase().rpc("admin_clear_member_pin", { p_member_id: memberId }));
+/** Credenciales con las que un admin desbloquea /admin. La base de datos vuelve a comprobarlas. */
+export type AdminCredentials = { adminId: string; pin: string };
+
+export async function adminClearPin(admin: AdminCredentials, memberId: string): Promise<void> {
+  await run(
+    getSupabase().rpc("admin_clear_member_pin", {
+      p_admin_id: admin.adminId,
+      p_admin_pin: admin.pin,
+      p_member_id: memberId,
+    }),
+  );
 }
 
 /** Publica la canción del día y avisa al canal de Teams (si está configurado). */

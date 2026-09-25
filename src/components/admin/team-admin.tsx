@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { KeyRound, Pencil, Plus } from "lucide-react";
+import { KeyRound, Pencil, Plus, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { adminClearPin, errorMessage, saveMember, updateMember } from "@/lib/mutations";
 import type { Member } from "@/lib/types";
@@ -15,6 +15,7 @@ import { MemberAvatar } from "@/components/member-avatar";
 import { MemberEditForm } from "@/components/member-edit-form";
 import { emptyMemberValue, MemberFields, toDraft, type MemberFormValue } from "@/components/member-fields";
 import { useIdentity } from "@/components/identity/identity-provider";
+import { useAdminCredentials } from "./admin-gate";
 
 const EMPTY = emptyMemberValue({ emoji: "🎧", color: "#0470B3" });
 
@@ -135,6 +136,7 @@ function MemberRows({
 }
 
 function MemberRow({ member, isMe, onEdit }: { member: Member; isMe: boolean; onEdit: () => void }) {
+  const admin = useAdminCredentials();
   const { run, busy, error } = useSaving();
 
   const toggleActive = () => {
@@ -144,7 +146,7 @@ function MemberRow({ member, isMe, onEdit }: { member: Member; isMe: boolean; on
 
   const clearPin = () => {
     if (!window.confirm(`¿Quitar el PIN de ${member.name}?`)) return;
-    run(() => adminClearPin(member.id));
+    run(() => adminClearPin(admin, member.id));
   };
 
   return (
@@ -155,6 +157,11 @@ function MemberRow({ member, isMe, onEdit }: { member: Member; isMe: boolean; on
           <p className={cn("truncate font-semibold", member.active ? "text-brand-900" : "text-slate-400")}>
             {member.name}
             {isMe && <span className="ml-1.5 text-xs font-medium text-brand-500">(tú)</span>}
+            {member.is_admin && (
+              <span className="ml-1.5 inline-flex items-center gap-0.5 align-middle text-xs font-medium text-slate-500">
+                <ShieldCheck className="size-3" /> Admin
+              </span>
+            )}
           </p>
           {member.has_pin && (
             <p className="flex items-center gap-1 text-xs text-slate-500">

@@ -75,9 +75,11 @@ export function UserMenu() {
               <KeyRound className="size-4 text-brand-500" /> {currentMember.has_pin ? "Cambiar PIN" : "Añadir PIN"}
             </button>
             <NotificationsItem onDone={close} />
-            <Link href="/admin" role="menuitem" className={ITEM} onClick={close}>
-              <Users className="size-4 text-brand-500" /> Gestionar equipo
-            </Link>
+            {currentMember.is_admin && (
+              <Link href="/admin" role="menuitem" className={ITEM} onClick={close}>
+                <Users className="size-4 text-brand-500" /> Gestionar equipo
+              </Link>
+            )}
             <div className="my-1 h-px bg-slate-100" />
             <button type="button" role="menuitem" className={ITEM} onClick={() => { close(); signOut(); }}>
               <LogOut className="size-4 text-slate-400" /> Salir

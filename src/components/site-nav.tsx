@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CalendarDays, Disc3, History, Trophy, Users } from "lucide-react";
 import { cn } from "@/lib/cn";
+import { useIdentity } from "@/components/identity/identity-provider";
 
 const LINKS = [
   { href: "/", label: "Hoy", icon: Disc3 },
@@ -42,13 +43,15 @@ export function DesktopNav() {
 /** Barra inferior en móvil: al pulgar, que se puntúa con el café en la mano. */
 export function MobileNav() {
   const pathname = usePathname();
-  const links = [...LINKS, { href: "/admin", label: "Equipo", icon: Users }];
+  const { currentMember } = useIdentity();
+  // La pestaña Equipo solo la ven los admins.
+  const links = currentMember?.is_admin ? [...LINKS, { href: "/admin", label: "Equipo", icon: Users }] : LINKS;
   return (
     <nav
       className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/70 bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
       aria-label="Principal"
     >
-      <ul className="mx-auto grid max-w-lg grid-cols-5">
+      <ul className={cn("mx-auto grid max-w-lg", links.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
         {links.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (

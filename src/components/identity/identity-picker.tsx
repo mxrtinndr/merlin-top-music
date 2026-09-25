@@ -12,6 +12,7 @@ import { MemberAvatar } from "@/components/member-avatar";
 import { emptyMemberValue, MemberFields, randomMemberLook, toDraft, type MemberFormValue } from "@/components/member-fields";
 import { PinInput } from "./pin-input";
 import { useIdentity } from "./identity-provider";
+import { adminNames } from "@/components/admin/admin-gate";
 
 type Step = { kind: "list" } | { kind: "pin"; member: Member } | { kind: "new" };
 
@@ -95,7 +96,8 @@ function MemberList({ onPin, onNew }: { onPin: (member: Member) => void; onNew: 
 }
 
 function PinStep({ member, onBack }: { member: Member; onBack: () => void }) {
-  const { selectMember } = useIdentity();
+  const { members, selectMember } = useIdentity();
+  const admins = adminNames(members);
   const [pin, setPin] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
@@ -139,7 +141,9 @@ function PinStep({ member, onBack }: { member: Member; onBack: () => void }) {
           Entrar
         </Button>
       </div>
-      <p className="text-center text-xs text-slate-400">¿Lo has olvidado? Cualquiera puede quitarlo desde Equipo.</p>
+      <p className="text-center text-xs text-slate-400">
+        ¿Lo has olvidado? {admins ? `Pídele a ${admins} que te lo quite.` : "Pide a administración que te lo quite."}
+      </p>
     </form>
   );
 }

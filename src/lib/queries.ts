@@ -18,7 +18,7 @@ export const getMembers = cache(async (): Promise<Member[]> => {
   return unwrap(
     await getSupabase()
       .from("members")
-      .select("id, name, emoji, color, avatar_url, has_pin, active, created_at")
+      .select("id, name, emoji, color, avatar_url, has_pin, is_admin, active, created_at")
       .order("name"),
   );
 });

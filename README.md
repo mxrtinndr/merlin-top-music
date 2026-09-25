@@ -15,7 +15,7 @@ La tradición musical del equipo de Merlin Software, sin Excel. Cada día una pe
 | `/historico` | Todas las canciones por meses, más *🏆 Hall of Fame* y *🙈 Vergüenza* (top/bottom 20). Cada una abre su detalle. |
 | `/calendario` | El mes en cuadrícula. Cada día con canción muestra su carátula, la valoración final y la foto de quien la puso, y al pulsarlo se abre en la portada. Tiene flechas para cambiar de mes (`?mes=AAAA-MM`). En móvil, debajo va la lista del mes con los detalles. |
 | `/historico/[id]` | Detalle de una canción con todos los votos. Se puede puntuar tarde. |
-| `/admin` | Gestión del equipo: altas, foto de perfil, nombres, emoji/color, activar o desactivar, quitar PIN olvidados. |
+| `/admin` | Gestión del equipo, **solo para admins**: altas, foto de perfil, nombres, emoji/color, activar o desactivar, quitar PIN olvidados. |
 
 Cada persona puede además editar su foto, nombre y color desde el menú de la cabecera → **Editar mi perfil**.
 
@@ -60,6 +60,7 @@ Están en [`supabase/migrations/`](supabase/migrations) y se aplican en orden:
 2. `20260924090100_views_and_functions.sql`: vista de resumen, función de ranking y funciones de PIN.
 3. `20260925090000_member_photos.sql`: columna `avatar_url`, bucket de Storage `avatars` y sus políticas. No hay que crear el bucket a mano.
 4. `20260926090000_realtime_daily_picks.sql`: activa Realtime en `daily_picks` (refresco en vivo y avisos de nominación).
+5. `20260927090000_admin_accounts.sql`: columna `is_admin` (Martín y Sara quedan como admins) y `admin_clear_member_pin` pasa a exigir el PIN de un admin.
 
 **Opción A, Supabase CLI** (recomendada):
 
@@ -78,7 +79,7 @@ Si el CLI se queja de que falta `supabase/config.toml`, ejecuta antes `npx supab
 Hay tres formas, elige la que prefieras:
 
 - **Nada que hacer**: la primera vez que alguien entra pulsa *"Es mi primera vez"* y se crea su perfil.
-- **Desde `/admin`**: das de alta a todo el equipo desde la web (también se llega desde el menú de usuario → *Gestionar equipo*).
+- **Desde `/admin`** (solo admins): das de alta a todo el equipo desde la web (también se llega desde el menú de usuario → *Gestionar equipo*).
 - **Con el seed**: [`supabase/seed.sql`](supabase/seed.sql) trae la lista inicial del equipo. Revísala y ejecútala en el SQL Editor. Es idempotente: no duplica nombres que ya existan. Las fotos se suben luego desde la app.
 
 ---
@@ -108,7 +109,7 @@ members.avatar_url ──> Storage: avatars/<member_id>/<timestamp>.webp
 
 | Tabla | Campos clave | Reglas en la base de datos |
 | --- | --- | --- |
-| `members` | `name`, `avatar_url`, `emoji`, `color`, `active`, `has_pin` | Nombre único sin distinguir mayúsculas ni espacios. Color `#RRGGBB`. `avatar_url` debe ser `http(s)://`. |
+| `members` | `name`, `avatar_url`, `emoji`, `color`, `active`, `has_pin`, `is_admin` | Nombre único sin distinguir mayúsculas ni espacios. Color `#RRGGBB`. `avatar_url` debe ser `http(s)://`. El cliente no puede escribir `is_admin`. |
 | `daily_picks` | `date`, `presenter_id`, `song_title`, `song_artist`, `song_url`, `presenter_comment`, `next_presenter_id` | **Una canción por día** (`unique(date)`). No se puede nominar a quien presenta. El enlace debe ser `http(s)://`. |
 | `ratings` | `daily_pick_id`, `member_id`, `score`, `comment` | `score` entre **1 y 4**. **Un voto por persona y canción** (`unique(daily_pick_id, member_id)`). Un trigger impide puntuar tu propia canción. Comentario ≤ 280 caracteres. |
 | `member_pins` | `member_id`, `pin_hash` (bcrypt) | Sin permisos para el cliente. Solo se usa a través de funciones. |
@@ -117,7 +118,8 @@ Además:
 
 - **`daily_picks_summary`** (vista): cada canción con `avg_score` y `ratings_count`.
 - **`get_leaderboard(p_from, p_to)`** (función): ranking por rango de fechas.
-- **`verify_member_pin`**, **`set_member_pin`**, **`admin_clear_member_pin`**: gestión del PIN.
+- **`verify_member_pin`**, **`set_member_pin`**: gestión del PIN.
+- **`admin_clear_member_pin(p_admin_id, p_admin_pin, p_member_id)`**: quita un PIN olvidado. Solo funciona con el id y el PIN correcto de un admin activo.
 - **Bucket `avatars`** (Supabase Storage): público para lectura, máx. 1 MB, solo WebP/JPEG/PNG.
 
 Las mismas validaciones están en el frontend, con mensajes en castellano. Si alguna se salta, la base de datos la rechaza y la UI traduce el error.
@@ -144,7 +146,9 @@ Las mismas validaciones están en el frontend, con mensajes en castellano. Si al
 - **Miembros inactivos** en lugar de borrados: desaparecen de los selectores pero conservan su histórico y su sitio en el ranking.
 - **Fotos de perfil**: son opcionales, y quien no sube foto conserva el emoji como avatar. Al elegir una foto aparece un encuadre circular: se arrastra para moverla y se amplía con la barra, la rueda del ratón o el teclado (flechas y +/−). De entrada sale centrada y algo subida en fotos verticales, que es donde suele estar la cara. El navegador reduce el recorte a 320 px y la convierte a WebP (o JPEG) antes de subirla, así que una foto de móvil de varios MB se queda en pocos KB. Cada subida usa un nombre nuevo, para no pelearse con la caché, y la foto anterior se borra del bucket. Como no hay login, cualquiera con la app puede subir o borrar fotos del bucket.
 - **Identidad**: se guarda el id del miembro en `localStorage` (`merlin-fm:member-id`). Se cambia desde el menú de la cabecera.
-- **PIN opcional (4 dígitos)**: se guarda con bcrypt en una tabla que el cliente no puede leer. Se pide al elegir un perfil protegido. Cualquiera puede quitar un PIN desde `/admin` (para olvidos): **la seguridad no es un objetivo**. La API es pública con la clave anónima, y alguien con conocimientos podría escribir directamente. Para algo más serio habría que pasar a Supabase Auth.
+- **PIN opcional (4 dígitos)**: se guarda con bcrypt en una tabla que el cliente no puede leer. Se pide al elegir un perfil protegido. Si alguien lo olvida, un admin se lo quita desde `/admin`.
+- **Cuentas de administración**: las marca `members.is_admin` (de inicio, Martín y Sara). Solo ellas ven *Equipo* en la navegación y el menú, y `/admin` pide ser admin, **tener PIN** (sin él, cualquiera podría elegir su nombre) y confirmarlo al entrar. Para dar o quitar el rol, en el SQL Editor: `update public.members set is_admin = true where name = 'Nombre';`.
+- **Límites de seguridad**: no hay login y la API es pública con la clave anónima. Quitar PIN sí se comprueba en la base de datos, pero dar de alta, editar o desactivar miembros sigue abierto a quien escriba directamente contra la API: el control de `/admin` es de la interfaz. Para algo más serio habría que pasar a Supabase Auth.
 - **Ranking**: la media es sobre **todas** las notas recibidas (no la media de medias por canción). Hay desempate por nº de votos. Quien no tiene votos en el periodo aparece aparte.
 - **Refresco automático**: al volver a la pestaña (p. ej. la dejaste abierta ayer) se recargan los datos.
 - **Tiempo real y avisos de escritorio**: la app escucha los cambios de `daily_picks` con Supabase Realtime y se refresca sola. Si la nueva nominación es para ti y has activado los avisos (menú de usuario → *Avisarme cuando me nominen*), te llega una notificación del sistema, una sola vez por canción. Funciona mientras la app esté abierta, aunque sea en segundo plano. Con la app cerrada harían falta Web Push y un servidor que los envíe.
