@@ -25,8 +25,10 @@ export function DesktopNav() {
           key={href}
           href={href}
           className={cn(
-            "rounded-full px-4 py-2 text-sm font-semibold transition",
-            isActive(pathname, href) ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:text-brand-700",
+            "relative rounded-full px-4 py-2 text-[15px] font-semibold transition-all duration-200",
+            isActive(pathname, href)
+              ? "bg-surface text-brand-700 shadow-card"
+              : "text-slate-500 hover:-translate-y-px hover:bg-surface/70 hover:text-brand-700",
           )}
         >
           {label}
@@ -42,7 +44,7 @@ export function MobileNav() {
   const links = [...LINKS, { href: "/admin", label: "Equipo", icon: Users }];
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/70 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/70 bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
       aria-label="Principal"
     >
       <ul className="mx-auto grid max-w-md grid-cols-4">

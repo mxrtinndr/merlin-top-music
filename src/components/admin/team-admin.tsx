@@ -10,6 +10,7 @@ import { Card, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
+import { ShowMoreList } from "@/components/ui/show-more";
 import { MemberAvatar } from "@/components/member-avatar";
 import { MemberEditForm } from "@/components/member-edit-form";
 import { emptyMemberValue, MemberFields, toDraft, type MemberFormValue } from "@/components/member-fields";
@@ -121,11 +122,15 @@ function MemberRows({
     return <p className="py-4 text-center text-sm text-slate-500">Nadie por aquí todavía.</p>;
   }
   return (
-    <ul className="divide-y divide-slate-100">
-      {members.map((member) => (
-        <MemberRow key={member.id} member={member} isMe={member.id === currentId} onEdit={() => onEdit(member)} />
-      ))}
-    </ul>
+    <ShowMoreList items={members}>
+      {(visible) => (
+        <ul className="divide-y divide-slate-100">
+          {visible.map((member) => (
+            <MemberRow key={member.id} member={member} isMe={member.id === currentId} onEdit={() => onEdit(member)} />
+          ))}
+        </ul>
+      )}
+    </ShowMoreList>
   );
 }
 
@@ -203,7 +208,7 @@ function Switch({
     >
       <span
         className={cn(
-          "absolute left-0.5 top-0.5 size-5 rounded-full bg-white shadow transition-transform",
+          "absolute left-0.5 top-0.5 size-5 rounded-full bg-surface shadow transition-transform",
           checked && "translate-x-5",
         )}
       />

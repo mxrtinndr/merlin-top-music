@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, Send } from "lucide-react";
 import { createPick, errorMessage, updatePick } from "@/lib/mutations";
-import { detectProvider, getSongEmbed, isHttpUrl, PROVIDER_LABELS } from "@/lib/music";
+import { detectProvider, getSongEmbed, isHttpUrl } from "@/lib/music";
 import type { DailyPick, Member, PickInput } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Field, FormError, Input, Select, Textarea } from "@/components/ui/field";
@@ -25,7 +25,10 @@ function initialValues(props: Props): PickInput {
 function validate(values: PickInput, presenterId: string): string | null {
   if (!values.song_title.trim()) return "Falta el título de la canción.";
   if (!values.song_artist.trim()) return "Falta el artista.";
-  if (values.song_url?.trim() && !isHttpUrl(values.song_url)) return "El enlace no parece válido (debe empezar por https://).";
+  const url = values.song_url?.trim();
+  if (url && !isHttpUrl(url)) return "El enlace no parece válido (debe empezar por https://).";
+  // YouTube lo busca la app sola: solo pedimos el enlace de Spotify.
+  if (url && detectProvider(url) !== "spotify") return "Pega un enlace de Spotify (open.spotify.com/…). YouTube lo buscamos nosotros.";
   if (!values.next_presenter_id) return "Elige quién presenta en el siguiente turno.";
   if (values.next_presenter_id === presenterId) return "No vale autonominarse 😉";
   return null;
@@ -54,8 +57,8 @@ export function PickForm(props: Props) {
 
   const candidates = activeMembers.filter((member) => member.id !== props.presenter.id);
   const url = values.song_url?.trim() ?? "";
-  const provider = url && isHttpUrl(url) ? detectProvider(url) : null;
-  const embeddable = provider ? getSongEmbed(url) !== null : false;
+  const isSpotify = url !== "" && isHttpUrl(url) && detectProvider(url) === "spotify";
+  const embeddable = isSpotify && getSongEmbed(url) !== null;
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -105,19 +108,17 @@ export function PickForm(props: Props) {
       </div>
 
       <Field
-        label="Enlace"
+        label="Enlace de Spotify"
         htmlFor="pick-url"
         optional
         hint={
-          provider && provider !== "other" ? (
+          isSpotify ? (
             <span className="inline-flex items-center gap-1 text-emerald-600">
               <Check className="size-3.5" />
-              {embeddable
-                ? `${PROVIDER_LABELS[provider]}: se verá el reproductor integrado`
-                : `${PROVIDER_LABELS[provider]}: se mostrará como enlace`}
+              {embeddable ? "Se verá el reproductor de Spotify" : "Se mostrará como enlace de Spotify"}
             </span>
           ) : (
-            "Pega un enlace de Spotify o YouTube y se verá el reproductor."
+            "En Spotify: Compartir → Copiar enlace de la canción. El vídeo de YouTube lo buscamos solos."
           )
         }
       >

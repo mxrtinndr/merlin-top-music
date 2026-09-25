@@ -21,6 +21,16 @@ function toISODate(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
+export function addDaysISO(iso: string, days: number): string {
+  const date = parseISODate(iso);
+  date.setUTCDate(date.getUTCDate() + days);
+  return toISODate(date);
+}
+
+export function isISODate(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
 /** Lunes de la semana de la fecha dada. */
 export function startOfWeekISO(iso: string): string {
   const date = parseISODate(iso);
