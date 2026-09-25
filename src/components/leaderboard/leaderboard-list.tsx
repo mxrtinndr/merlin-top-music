@@ -11,7 +11,7 @@ export function LeaderboardList({ rows, startRank }: { rows: LeaderboardRow[]; s
       {rows.map((row, index) => (
         <li
           key={row.member_id}
-          className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white p-3 shadow-card transition-shadow hover:shadow-lift animate-rise sm:gap-4 sm:p-4"
+          className="flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-surface p-3 shadow-card transition-shadow hover:shadow-lift animate-rise sm:gap-4 sm:p-4"
           style={{ animationDelay: `${0.6 + index * 0.06}s` }}
         >
           <span className="w-6 text-center font-display text-lg font-bold tabular-nums text-slate-400">
@@ -30,7 +30,7 @@ export function LeaderboardList({ rows, startRank }: { rows: LeaderboardRow[]; s
             </div>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full origin-left rounded-full bg-linear-to-r from-brand-700 to-brand-400 animate-grow"
+                className="h-full origin-left rounded-full bg-linear-to-r from-deep-700 to-brand-400 animate-grow"
                 style={{ width: `${scorePercent(row.avg_score)}%`, animationDelay: `${0.7 + index * 0.06}s` }}
               />
             </div>

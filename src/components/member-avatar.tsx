@@ -44,7 +44,7 @@ export function MemberAvatar({
   return (
     <span
       className={cn(
-        "relative inline-flex shrink-0 select-none items-center justify-center overflow-hidden rounded-full leading-none ring-2 ring-white",
+        "relative inline-flex shrink-0 select-none items-center justify-center overflow-hidden rounded-full leading-none ring-2 ring-surface",
         sizeClass,
         className,
       )}

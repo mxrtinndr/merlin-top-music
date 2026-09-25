@@ -14,7 +14,7 @@ export function SegmentedLinks<T extends string>({
   label: string;
 }) {
   return (
-    <nav aria-label={label} className="inline-flex max-w-full overflow-x-auto rounded-full border border-slate-200 bg-white p-1 shadow-card">
+    <nav aria-label={label} className="inline-flex max-w-full overflow-x-auto rounded-full border border-slate-200 bg-surface p-1 shadow-card">
       {options.map((option) => (
         <Link
           key={option.value}

@@ -4,7 +4,10 @@ import { cn } from "@/lib/cn";
 export function Card({ className, ...props }: ComponentProps<"section">) {
   return (
     <section
-      className={cn("rounded-2xl border border-slate-200/70 bg-white shadow-card", className)}
+      className={cn(
+        "rounded-2xl border border-slate-200/60 bg-surface shadow-card transition-shadow duration-300 hover:shadow-lift",
+        className,
+      )}
       {...props}
     />
   );
@@ -24,7 +27,7 @@ export function CardHeader({
   return (
     <div className={cn("flex items-start justify-between gap-3", className)}>
       <div>
-        <h2 className="text-base font-semibold text-ink">{title}</h2>
+        <h2 className="text-lg font-semibold text-ink">{title}</h2>
         {subtitle && <p className="mt-0.5 text-sm text-slate-500">{subtitle}</p>}
       </div>
       {action}
