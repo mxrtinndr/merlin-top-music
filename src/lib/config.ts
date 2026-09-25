@@ -14,3 +14,13 @@ export const MEMBER_COLORS = [
   "#2E6FF2", "#1E4C8C", "#0EA5E9", "#14B8A6",
   "#22C55E", "#F59E0B", "#F43F5E", "#8B5CF6",
 ] as const;
+
+/** Quién ha hecho la app (pie de página), con enlaces a sus perfiles. */
+export const AUTHORS: ReadonlyArray<{ name: string; github?: string; youtube?: string }> = [
+  { name: "Sara Salgueiro", github: "https://github.com/sarasalgueiro" },
+  {
+    name: "Martín",
+    github: "https://github.com/martindelrioalvarez",
+    youtube: "https://www.youtube.com/@talkingtigers",
+  },
+];
