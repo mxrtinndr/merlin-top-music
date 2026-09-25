@@ -47,7 +47,7 @@ function spotifyEmbed(url: URL): SongEmbed | null {
   };
 }
 
-function youtubeId(url: URL): string | null {
+function youtubeIdFromUrl(url: URL): string | null {
   const host = url.hostname.replace(/^www\./, "");
   if (host === "youtu.be") return url.pathname.slice(1).split("/")[0] || null;
   if (url.searchParams.get("v")) return url.searchParams.get("v");
@@ -63,12 +63,51 @@ export function getSongEmbed(rawUrl: string | null | undefined): SongEmbed | nul
   const provider = detectProvider(rawUrl);
   if (provider === "spotify") return spotifyEmbed(url);
   if (provider === "youtube") {
-    const id = youtubeId(url);
+    const id = youtubeIdFromUrl(url);
     return id
       ? { provider: "youtube", src: `https://www.youtube-nocookie.com/embed/${id}`, height: null }
       : null;
   }
   return null;
+}
+
+/** Id del vídeo si el enlace es de YouTube. */
+export function youtubeVideoId(rawUrl: string | null | undefined): string | null {
+  const url = rawUrl ? parseUrl(rawUrl) : null;
+  return url && detectProvider(rawUrl) === "youtube" ? youtubeIdFromUrl(url) : null;
+}
+
+export type SongLinks = {
+  spotify: string;
+  youtube: string;
+  /** Enlace original cuando no es ni de Spotify ni de YouTube. */
+  other: string | null;
+};
+
+/**
+ * Dónde escuchar la canción. Spotify: el enlace guardado o, si no hay, una
+ * búsqueda. YouTube: el primer vídeo del buscador (vía /api/youtube), salvo
+ * en canciones antiguas que ya guardaban un enlace de YouTube.
+ */
+export function getSongLinks(song: { song_title: string; song_artist: string; song_url: string | null }): SongLinks {
+  const url = song.song_url && isHttpUrl(song.song_url) ? song.song_url.trim() : null;
+  const provider = detectProvider(url);
+  const params = new URLSearchParams({ title: song.song_title, artist: song.song_artist });
+  return {
+    spotify:
+      provider === "spotify" && url
+        ? url
+        : `https://open.spotify.com/search/${encodeURIComponent(`${song.song_title} ${song.song_artist}`)}`,
+    youtube: provider === "youtube" && url ? url : `/api/youtube?${params}`,
+    other: provider === "other" ? url : null,
+  };
+}
+
+/** URL (de nuestra API) de la carátula de una canción. */
+export function coverSrc(song: { song_title: string; song_artist: string; song_url: string | null }): string {
+  const params = new URLSearchParams({ title: song.song_title, artist: song.song_artist });
+  if (song.song_url) params.set("url", song.song_url);
+  return `/api/cover?${params}`;
 }
 
 export const PROVIDER_LABELS: Record<MusicProvider, string> = {

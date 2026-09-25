@@ -37,7 +37,7 @@ export function PinInput({
       autoFocus={autoFocus}
       placeholder="••••"
       className={cn(
-        "h-14 w-full rounded-2xl border bg-white text-center font-display text-3xl tracking-[0.6em] text-ink",
+        "h-14 w-full rounded-2xl border bg-surface text-center font-display text-3xl tracking-[0.6em] text-ink",
         "placeholder:text-slate-300 focus:outline-none focus:ring-4",
         invalid
           ? "border-rose-300 focus:ring-rose-500/10"

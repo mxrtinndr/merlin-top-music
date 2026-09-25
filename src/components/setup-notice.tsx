@@ -4,7 +4,7 @@ import { APP_NAME } from "@/lib/config";
 export function SetupNotice({ error }: { error?: string }) {
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col justify-center px-4 py-16">
-      <div className="rounded-3xl border border-slate-200/70 bg-white p-8 shadow-card">
+      <div className="rounded-3xl border border-slate-200/70 bg-surface p-8 shadow-card">
         <p className="text-4xl">🔌</p>
         <h1 className="mt-4 text-2xl font-bold text-brand-800">
           {error ? "No podemos hablar con Supabase" : "Falta conectar Supabase"}

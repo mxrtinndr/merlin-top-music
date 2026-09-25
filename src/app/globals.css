@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Modo oscuro por clase en <html> (lo pone el botón del tema). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-poppins), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -19,11 +22,28 @@
   --color-brand-900: #13294d;
   --color-brand-950: #0c1a33;
 
+  /* Los mismos azules, pero fijos en los dos temas: fondos oscuros con texto blanco
+     (degradados, botones). Los brand-600…950 se aclaran en modo oscuro para usarse como texto. */
+  --color-deep-600: #1f5ad6;
+  --color-deep-700: #1e4c8c;
+  --color-deep-800: #1b3a6b;
+  --color-deep-900: #13294d;
+  --color-deep-950: #0c1a33;
+
   --color-canvas: #f5f7fb;
+  /* Fondo de tarjetas, campos y menús. */
+  --color-surface: #ffffff;
   --color-ink: #0f1f3d;
 
-  --shadow-card: 0 1px 2px rgb(16 36 77 / 0.04), 0 6px 20px -8px rgb(16 36 77 / 0.1);
-  --shadow-lift: 0 2px 4px rgb(16 36 77 / 0.05), 0 16px 36px -12px rgb(16 36 77 / 0.2);
+  /* Esquinas más contenidas: pulido, sin parecer una burbuja. */
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 1rem;
+
+  /* Sombras suaves y difuminadas. */
+  --shadow-card: 0 1px 2px rgb(16 36 77 / 0.03), 0 12px 32px -18px rgb(16 36 77 / 0.16);
+  --shadow-lift: 0 2px 6px rgb(16 36 77 / 0.04), 0 22px 44px -22px rgb(16 36 77 / 0.3);
 
   --animate-rise: rise 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   --animate-grow: grow 1s cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -51,6 +71,56 @@
     from { opacity: 0; transform: scale(0.9); }
     to { opacity: 1; transform: none; }
   }
+}
+
+/*
+ * Modo oscuro: en lugar de añadir dark: a cada clase, redefinimos la paleta.
+ * Los grises se invierten, los azules de texto se aclaran y los fondos
+ * suaves (50/100/200) pasan a tintes oscuros. Los degradados usan deep-*,
+ * que no cambia, y el podio conserva sus dorados.
+ */
+.dark {
+  color-scheme: dark;
+
+  --color-canvas: #0b1220;
+  --color-surface: #141d2f;
+  --color-ink: #e6edf8;
+
+  --color-slate-50: #19233a;
+  --color-slate-100: #1f2a42;
+  --color-slate-200: #2b3852;
+  --color-slate-300: #3c4a66;
+  --color-slate-400: #7d8ba6;
+  --color-slate-500: #97a4bb;
+  --color-slate-600: #b5c0d2;
+  --color-slate-700: #cdd6e3;
+
+  --color-brand-50: #172747;
+  --color-brand-100: #1e3257;
+  --color-brand-200: #2a4677;
+  --color-brand-300: #4467a6;
+  --color-brand-600: #7fa8f8;
+  --color-brand-700: #a3c1fb;
+  --color-brand-800: #c2d6fc;
+  --color-brand-900: #dde8fd;
+  --color-brand-950: #eef4ff;
+
+  --color-rose-50: #3a1622;
+  --color-rose-200: #6b2436;
+  --color-rose-300: #8a2e44;
+  --color-rose-600: #fb7f98;
+  --color-rose-700: #fda4b5;
+  --color-emerald-50: #0f2e27;
+  --color-emerald-200: #1b5244;
+  --color-emerald-600: #4ade9f;
+  --color-emerald-700: #6ee7b7;
+  --color-amber-50: #33260c;
+  --color-amber-200: #5c4413;
+  --color-amber-700: #fcd34d;
+  --color-orange-600: #fb923c;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.25), 0 12px 32px -18px rgb(0 0 0 / 0.6);
+  --shadow-lift: 0 2px 6px rgb(0 0 0 / 0.3), 0 22px 44px -22px rgb(0 0 0 / 0.7);
 }
 
 @layer base {

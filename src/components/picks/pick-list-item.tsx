@@ -5,25 +5,29 @@ import { formatDayBadge, formatShortDate } from "@/lib/dates";
 import type { DailyPick, Member } from "@/lib/types";
 import { MemberChip } from "@/components/member-avatar";
 import { ScoreBadge } from "@/components/score-badge";
+import { SongCover } from "./song-cover";
 
 export function PickListItem({
   pick,
   presenter,
   rank,
   rankEmoji,
+  href = `/historico/${pick.id}`,
 }: {
   pick: DailyPick;
   presenter: Member | undefined;
   /** Posición cuando la lista es un ranking (Hall of Fame / vergüenza). */
   rank?: number;
   rankEmoji?: string;
+  /** Adónde lleva al pulsarla (por defecto, su detalle en el histórico). */
+  href?: string;
 }) {
   const day = formatDayBadge(pick.date);
 
   return (
     <Link
-      href={`/historico/${pick.id}`}
-      className="group flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-white p-3 shadow-card transition hover:border-brand-200 hover:shadow-lift sm:gap-4 sm:p-4"
+      href={href}
+      className="group flex items-center gap-3 rounded-2xl border border-slate-200/70 bg-surface p-3 shadow-card transition hover:border-brand-200 hover:shadow-lift sm:gap-4 sm:p-4"
     >
       {rank !== undefined ? (
         <span className="flex size-12 shrink-0 flex-col items-center justify-center rounded-xl bg-brand-50 text-brand-700">
@@ -36,6 +40,8 @@ export function PickListItem({
           <span className="font-display text-lg font-bold leading-tight">{day.day}</span>
         </span>
       )}
+
+      <SongCover pick={pick} />
 
       <div className="min-w-0 flex-1">
         <p className="truncate font-semibold text-brand-900">{pick.song_title}</p>

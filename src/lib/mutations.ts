@@ -153,10 +153,15 @@ export async function adminClearPin(memberId: string): Promise<void> {
   await run(getSupabase().rpc("admin_clear_member_pin", { p_member_id: memberId }));
 }
 
-export async function createPick(
-  input: PickInput & { date: string; presenter_id: string },
-): Promise<void> {
-  await run(getSupabase().from("daily_picks").insert(input));
+/** Publica la canción del día y avisa al canal de Teams (si está configurado). */
+export async function createPick(input: PickInput & { date: string; presenter_id: string }): Promise<void> {
+  const { id } = await run<{ id: string }>(getSupabase().from("daily_picks").insert(input).select("id").single());
+  // Sin esperar: si Teams falla, la canción ya está publicada igualmente.
+  void fetch("/api/teams", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ pickId: id }),
+  }).catch(() => {});
 }
 
 export async function updatePick(id: string, input: PickInput): Promise<void> {

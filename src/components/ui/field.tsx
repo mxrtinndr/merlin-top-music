@@ -2,7 +2,7 @@ import type { ComponentProps } from "react";
 import { cn } from "@/lib/cn";
 
 const CONTROL =
-  "w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-[15px] text-ink placeholder:text-slate-400 " +
+  "w-full rounded-xl border border-slate-200 bg-surface px-3.5 py-2.5 text-[15px] text-ink placeholder:text-slate-400 " +
   "transition focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/10";
 
 export function Field({

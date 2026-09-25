@@ -15,43 +15,47 @@ export function TurnTiles({
   next: Member | undefined;
   currentMemberId: string | undefined;
 }) {
+  const presenterIsMe = presenter !== undefined && presenter.id === currentMemberId;
   const nextIsMe = next !== undefined && next.id === currentMemberId;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <div className="flex items-center gap-4 rounded-2xl border border-slate-200/70 bg-white p-4 shadow-card">
-        <MemberAvatar member={presenter} size="lg" />
+    <div className="mt-2 grid gap-3 sm:mt-4 sm:grid-cols-2">
+      <div className="flex items-center gap-3 rounded-2xl border border-slate-200/60 bg-surface px-4 py-3 shadow-card transition duration-300 hover:-translate-y-0.5 hover:shadow-lift">
+        <MemberAvatar member={presenter} size="md" />
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Hoy presenta</p>
-          <p className="truncate font-display text-xl font-semibold text-brand-900">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">Hoy presenta</p>
+          <p className="truncate font-display text-lg font-semibold text-brand-900">
             {presenter?.name ?? "Por decidir"}
-            {presenter && presenter.id === currentMemberId && <span className="text-brand-500"> (tú)</span>}
+            {presenterIsMe && <span className="text-brand-500"> (tú)</span>}
           </p>
+          {presenterIsMe && !next && (
+            <p className="text-sm font-semibold text-orange-600">¡Hoy es tu turno de recomendar una canción! 🎤</p>
+          )}
         </div>
       </div>
 
       <div
         className={cn(
-          "relative flex items-center gap-4 overflow-hidden rounded-2xl p-4 text-white shadow-lift",
-          "bg-linear-to-br from-brand-800 via-brand-700 to-brand-500",
+          "relative flex items-center gap-3 overflow-hidden rounded-2xl px-4 py-3 text-white shadow-lift transition duration-300 hover:-translate-y-0.5",
+          "bg-linear-to-br from-deep-800 via-deep-700 to-brand-500",
         )}
       >
         {/* Brillo decorativo */}
         <div className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full bg-white/10 blur-2xl" aria-hidden />
         {next ? (
-          <MemberAvatar member={next} size="lg" className="ring-white/30" />
+          <MemberAvatar member={next} size="md" className="ring-white/30" />
         ) : (
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-white/10">
-            <ArrowRight className="size-6" />
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10">
+            <ArrowRight className="size-5" />
           </span>
         )}
         <div className="relative min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-brand-100">Siguiente turno</p>
-          <p className="truncate font-display text-xl font-semibold">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/75">Siguiente turno</p>
+          <p className="truncate font-display text-lg font-semibold">
             {next ? next.name : "Se nomina al publicar"}
           </p>
-          {nextIsMe && <p className="text-sm text-brand-100">¡Te toca! Ve pensando tu canción 🎶</p>}
-          {!next && <p className="text-sm text-brand-100">Quien presenta hoy elige a la siguiente persona.</p>}
+          {nextIsMe && <p className="text-sm text-white/75">¡Te toca! Ve pensando tu canción 🎶</p>}
+          {!next && <p className="text-sm text-white/75">Quien presenta hoy elige a la siguiente persona.</p>}
         </div>
       </div>
     </div>

@@ -49,14 +49,14 @@ export function RatingForm({ pickId, memberId }: { pickId: string; memberId: str
                 "group flex flex-col items-center gap-1 rounded-2xl border px-1 py-3 transition",
                 selected
                   ? "border-brand-500 bg-brand-500 text-white shadow-md shadow-brand-500/30"
-                  : "border-slate-200 bg-white text-brand-900 hover:border-brand-300 hover:bg-brand-50",
+                  : "border-slate-200 bg-surface text-brand-900 hover:border-brand-300 hover:bg-brand-50",
               )}
             >
               <span className={cn("text-2xl transition-transform", selected ? "scale-110" : "group-hover:scale-110")}>
                 {option.emoji}
               </span>
               <span className="font-display text-lg font-bold leading-none">{option.value}</span>
-              <span className={cn("text-[11px] font-medium leading-tight", selected ? "text-brand-50" : "text-slate-500")}>
+              <span className={cn("text-[11px] font-medium leading-tight", selected ? "text-white/80" : "text-slate-500")}>
                 {option.label}
               </span>
             </button>

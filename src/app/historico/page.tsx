@@ -65,7 +65,7 @@ export default async function HistoryPage({ searchParams }: PageProps<"/historic
       ) : order === "recientes" ? (
         groupByMonth(picks).map((group) => (
           <section key={group.month} className="space-y-2">
-            <h2 className="sticky top-16 z-10 -mx-1 bg-canvas/90 px-1 py-2 text-sm font-semibold capitalize text-slate-500 backdrop-blur">
+            <h2 className="sticky top-20 z-10 md:top-24 -mx-1 bg-canvas/90 px-1 py-2 text-sm font-semibold capitalize text-slate-500 backdrop-blur">
               {group.month}
             </h2>
             {group.picks.map((pick) => (
