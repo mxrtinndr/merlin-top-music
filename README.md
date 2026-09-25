@@ -10,8 +10,8 @@ La tradición musical del equipo de Merlin Software, sin Excel. Cada día una pe
 
 | Ruta | Qué hace |
 | --- | --- |
-| `/` **Hoy** | Quién presenta hoy y quién va después (bien visible). Si hay canción: reproductor de Spotify/YouTube, comentario y panel de puntuación. Si no la hay y te toca, el formulario para publicarla. |
-| `/ranking` | Podio (🥇🥈🥉) + lista con barras. Media de **todas** las notas recibidas por las canciones de cada persona. Filtro: esta semana / este mes / histórico. |
+| `/` **Hoy** | Quién presenta hoy y quién va después. La canción de hoy ocupa la mitad del ancho, con *Votación* y *Comentarios* al lado. Tiene flechas ‹ › y un selector para ver las canciones anteriores de la semana (`/?dia=AAAA-MM-DD`), y con `/?cancion=<id>` abre cualquier canción. Si no hay canción y te toca, el formulario para publicarla. Debajo, el *Resumen de la semana*: portada destacada, canciones, votos, media, géneros más escuchados y carátulas de la semana. |
+| `/ranking` | Podio (🥇🥈🥉) + lista con barras. Media de **todas** las notas recibidas por las canciones de cada persona. Debajo, las canciones mejor puntuadas: al pulsar una se abre en la portada. Filtro: esta semana / este mes / histórico. |
 | `/historico` | Todas las canciones por meses, más *🏆 Hall of Fame* y *🙈 Vergüenza* (top/bottom 20). Cada una abre su detalle. |
 | `/historico/[id]` | Detalle de una canción con todos los votos. Se puede puntuar tarde. |
 | `/admin` | Gestión del equipo: altas, foto de perfil, nombres, emoji/color, activar o desactivar, quitar PIN olvidados. |
@@ -41,6 +41,16 @@ En Supabase → **Project Settings → API** (o el botón **Connect**):
 
 Si faltan, la app muestra una pantalla explicando qué configurar en lugar de romperse.
 
+### Opcional: avisos en Microsoft Teams
+
+Al publicar la canción del día, la app puede mandar una tarjeta a un canal de Teams con la canción, el comentario y la persona nominada. Teams la avisa en el escritorio y en el móvil aunque la web esté cerrada.
+
+1. En Teams, abre el canal, pulsa **⋯ → Workflows** y elige la plantilla **"Publicar en un canal cuando se reciba una solicitud de webhook"** (*Post to a channel when a webhook request is received*).
+2. Copia la URL que te da al terminar.
+3. Añádela como `TEAMS_WEBHOOK_URL` en `.env.local` y en Vercel (**Settings → Environment Variables**), y vuelve a desplegar. No lleva `NEXT_PUBLIC_`: solo la ve el servidor.
+
+Sin esa variable, la app funciona igual y no manda nada a Teams.
+
 ### 2. Aplicar las migraciones
 
 Están en [`supabase/migrations/`](supabase/migrations) y se aplican en orden:
@@ -48,6 +58,7 @@ Están en [`supabase/migrations/`](supabase/migrations) y se aplican en orden:
 1. `20260924090000_initial_schema.sql`: tablas, constraints, trigger y políticas RLS.
 2. `20260924090100_views_and_functions.sql`: vista de resumen, función de ranking y funciones de PIN.
 3. `20260925090000_member_photos.sql`: columna `avatar_url`, bucket de Storage `avatars` y sus políticas. No hay que crear el bucket a mano.
+4. `20260926090000_realtime_daily_picks.sql`: activa Realtime en `daily_picks` (refresco en vivo y avisos de nominación).
 
 **Opción A, Supabase CLI** (recomendada):
 
@@ -129,12 +140,20 @@ Las mismas validaciones están en el frontend, con mensajes en castellano. Si al
 - **Quien presenta no puntúa su canción** (trigger en base de datos).
 - **Se puede puntuar tarde** desde el histórico. La canción solo la edita quien presenta, y solo el mismo día.
 - **Miembros inactivos** en lugar de borrados: desaparecen de los selectores pero conservan su histórico y su sitio en el ranking.
-- **Fotos de perfil**: son opcionales, y quien no sube foto conserva el emoji como avatar. El navegador recorta la foto en cuadrado, desplazando el recorte hacia arriba en fotos verticales, que es donde suele estar la cara. La reduce a 320 px y la convierte a WebP (o JPEG) antes de subirla, así que una foto de móvil de varios MB se queda en pocos KB. Cada subida usa un nombre nuevo, para no pelearse con la caché, y la foto anterior se borra del bucket. Como no hay login, cualquiera con la app puede subir o borrar fotos del bucket.
+- **Fotos de perfil**: son opcionales, y quien no sube foto conserva el emoji como avatar. Al elegir una foto aparece un encuadre circular: se arrastra para moverla y se amplía con la barra, la rueda del ratón o el teclado (flechas y +/−). De entrada sale centrada y algo subida en fotos verticales, que es donde suele estar la cara. El navegador reduce el recorte a 320 px y la convierte a WebP (o JPEG) antes de subirla, así que una foto de móvil de varios MB se queda en pocos KB. Cada subida usa un nombre nuevo, para no pelearse con la caché, y la foto anterior se borra del bucket. Como no hay login, cualquiera con la app puede subir o borrar fotos del bucket.
 - **Identidad**: se guarda el id del miembro en `localStorage` (`merlin-fm:member-id`). Se cambia desde el menú de la cabecera.
 - **PIN opcional (4 dígitos)**: se guarda con bcrypt en una tabla que el cliente no puede leer. Se pide al elegir un perfil protegido. Cualquiera puede quitar un PIN desde `/admin` (para olvidos): **la seguridad no es un objetivo**. La API es pública con la clave anónima, y alguien con conocimientos podría escribir directamente. Para algo más serio habría que pasar a Supabase Auth.
 - **Ranking**: la media es sobre **todas** las notas recibidas (no la media de medias por canción). Hay desempate por nº de votos. Quien no tiene votos en el periodo aparece aparte.
 - **Refresco automático**: al volver a la pestaña (p. ej. la dejaste abierta ayer) se recargan los datos.
-- **Sin dark mode**: se ha priorizado que el tema claro quede pulido.
+- **Tiempo real y avisos de escritorio**: la app escucha los cambios de `daily_picks` con Supabase Realtime y se refresca sola. Si la nueva nominación es para ti y has activado los avisos (menú de usuario → *Avisarme cuando me nominen*), te llega una notificación del sistema, una sola vez por canción. Funciona mientras la app esté abierta, aunque sea en segundo plano. Con la app cerrada harían falta Web Push y un servidor que los envíe.
+- **Tu turno**: el día que te toca aparece *"¡Hoy es tu turno de recomendar una canción!"* junto a tu usuario en la cabecera (en móvil, como franja bajo ella) y en la baldosa de *Hoy presenta*.
+- **Carátulas**: `/api/cover` busca la portada de cada canción: la de Spotify (oEmbed) si el enlace es de Spotify; si no, la del catálogo de Apple Music por título y artista; y como último recurso, la miniatura del vídeo de YouTube. Redirige a la imagen y se cachea una semana. Si no encuentra nada, se ve una nota musical.
+- **Spotify y YouTube**: al publicar solo se pide el enlace de Spotify. Cada canción muestra los logos de las dos plataformas: Spotify abre el enlace (o una búsqueda si no lo hay) y YouTube pasa por `/api/youtube`, que redirige al primer vídeo del buscador para "título artista". No hay API de YouTube sin clave, así que se lee la página de resultados: si YouTube la cambia, se abre la búsqueda sin más. Las canciones antiguas con enlace de YouTube lo conservan.
+- **Pie de página**: una línea azul de marca y una fila por persona que hizo la app, alineada a la izquierda: su nombre y el icono de GitHub como enlace (`AUTHORS` en [`src/lib/config.ts`](src/lib/config.ts)).
+- **Listas largas**: la lista del equipo en `/admin` y los comentarios de cada canción van en un contenedor con scroll vertical que muestra 10 elementos. Al final hay un botón *Ver más* que despliega el resto.
+- **Votación interactiva**: pulsar una barra del reparto (p. ej. la del 4) filtra los comentarios por esa nota, y pulsarla otra vez quita el filtro. El número de votos abre la lista de quién ha votado, y la media abre la nota de cada persona con la cuenta que da esa media.
+- **Géneros del resumen semanal**: no se guardan en la base de datos. Se deducen del catálogo de Apple Music al mostrar el resumen, con las búsquedas cacheadas una semana. Las canciones que Apple no conoce no cuentan.
+- **Modo claro y oscuro**: botón sol/luna en la cabecera. Sin elección guardada se sigue el tema del sistema. En lugar de añadir `dark:` a cada clase, el modo oscuro redefine la paleta en [`globals.css`](src/app/globals.css): grises invertidos, azules de texto más claros y fondos en `surface`. Los degradados con texto blanco usan `deep-*`, que no cambia de un tema a otro.
 
 ---
 
@@ -158,7 +177,8 @@ src/
     queries.ts           Lecturas (Server Components)
     mutations.ts         Escrituras (cliente) + traducción de errores
     dates.ts             "Hoy" en Europe/Madrid, formatos en castellano
-    music.ts             Detección y embed de Spotify / YouTube
+    music.ts             Detección y embed de Spotify / YouTube, enlaces de escucha
+    covers.ts            Búsqueda de carátulas (Spotify, Apple Music, YouTube)
     scores.ts            Escala de puntuación
     config.ts            Nombre de la app, emojis y colores
 ```
