@@ -4,7 +4,7 @@ import { unstable_rethrow } from "next/navigation";
 import { connection } from "next/server";
 import { APP_NAME, APP_TAGLINE, COMPANY_NAME } from "@/lib/config";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { todayISO } from "@/lib/dates";
+import { isWorkday, todayISO } from "@/lib/dates";
 import { getLatestPick, getMembers } from "@/lib/queries";
 import { IdentityProvider } from "@/components/identity/identity-provider";
 import { SiteHeader } from "@/components/site-header";
@@ -12,7 +12,7 @@ import { MobileNav } from "@/components/site-nav";
 import { SetupNotice } from "@/components/setup-notice";
 import { SiteFooter } from "@/components/site-footer";
 import { THEME_INIT_SCRIPT } from "@/components/theme/theme";
-import { NominationNotifier } from "@/components/notifications/nomination-notifier";
+import { PickNotifier } from "@/components/notifications/pick-notifier";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
@@ -60,16 +60,21 @@ async function loadData() {
 async function App({ children }: { children: React.ReactNode }) {
   const { members, latestPick, error } = await loadData();
   if (error) return <SetupNotice error={error} />;
-  // Si la última canción es de un día anterior, hoy le toca a quien nominó.
-  const turnMemberId = latestPick && latestPick.date < todayISO() ? latestPick.next_presenter_id : null;
+  // Si la última canción es de un día anterior, hoy le toca a quien nominó (el finde no hay turno).
+  const today = todayISO();
+  const turnMemberId =
+    latestPick && latestPick.date < today && isWorkday(today) ? latestPick.next_presenter_id : null;
   return (
     <IdentityProvider initialMembers={members}>
-      <NominationNotifier
+      <PickNotifier
         latestPick={
           latestPick && {
             id: latestPick.id,
+            date: latestPick.date,
             presenter_id: latestPick.presenter_id,
             next_presenter_id: latestPick.next_presenter_id,
+            song_title: latestPick.song_title,
+            song_artist: latestPick.song_artist,
           }
         }
       />
