@@ -12,6 +12,8 @@ const SIZES = {
   md: { className: "size-24 rounded-xl", icon: "size-8", px: 96 },
   lg: { className: "size-20 rounded-2xl sm:size-24", icon: "size-8", px: 96 },
   xl: { className: "size-44 rounded-2xl sm:size-52", icon: "size-12", px: 208 },
+  /** Ocupa todo su contenedor (p. ej. la casilla del calendario). */
+  fill: { className: "size-full", icon: "size-5", px: 96 },
 } as const;
 
 /** Carátula de la canción; si no la encontramos, una nota musical sobre el degradado de marca. */

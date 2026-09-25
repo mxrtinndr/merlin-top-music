@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Disc3, History, Trophy, Users } from "lucide-react";
+import { CalendarDays, Disc3, History, Trophy, Users } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 const LINKS = [
   { href: "/", label: "Hoy", icon: Disc3 },
   { href: "/ranking", label: "Ranking", icon: Trophy },
   { href: "/historico", label: "Histórico", icon: History },
+  { href: "/calendario", label: "Calendario", icon: CalendarDays },
 ] as const;
 
 function isActive(pathname: string, href: string) {
@@ -47,7 +48,7 @@ export function MobileNav() {
       className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/70 bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
       aria-label="Principal"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4">
+      <ul className="mx-auto grid max-w-lg grid-cols-5">
         {links.map(({ href, label, icon: Icon }) => {
           const active = isActive(pathname, href);
           return (

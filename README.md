@@ -13,6 +13,7 @@ La tradición musical del equipo de Merlin Software, sin Excel. Cada día una pe
 | `/` **Hoy** | Quién presenta hoy y quién va después. La canción de hoy ocupa la mitad del ancho, con *Votación* y *Comentarios* al lado. Tiene flechas ‹ › y un selector para ver las canciones anteriores de la semana (`/?dia=AAAA-MM-DD`), y con `/?cancion=<id>` abre cualquier canción. Si no hay canción y te toca, el formulario para publicarla. Debajo, el *Resumen de la semana*: portada destacada, canciones, votos, media, géneros más escuchados y carátulas de la semana. |
 | `/ranking` | Podio (🥇🥈🥉) + lista con barras. Media de **todas** las notas recibidas por las canciones de cada persona. Debajo, las canciones mejor puntuadas: al pulsar una se abre en la portada. Filtro: esta semana / este mes / histórico. |
 | `/historico` | Todas las canciones por meses, más *🏆 Hall of Fame* y *🙈 Vergüenza* (top/bottom 20). Cada una abre su detalle. |
+| `/calendario` | El mes en cuadrícula. Cada día con canción muestra su carátula, la valoración final y la foto de quien la puso, y al pulsarlo se abre en la portada. Tiene flechas para cambiar de mes (`?mes=AAAA-MM`). En móvil, debajo va la lista del mes con los detalles. |
 | `/historico/[id]` | Detalle de una canción con todos los votos. Se puede puntuar tarde. |
 | `/admin` | Gestión del equipo: altas, foto de perfil, nombres, emoji/color, activar o desactivar, quitar PIN olvidados. |
 
@@ -125,6 +126,7 @@ Las mismas validaciones están en el frontend, con mensajes en castellano. Si al
 
 ## Decisiones de diseño
 
+- **Identidad visual**: colores y tipografías del manual de estilo de Merlín Software 2025. El azul índigo corporativo es `#00416A`; los secundarios, `#0470B3`, `#0098F2` y `#D0E8F7`; los grises, `#28363E`, `#A2ACB3` y `#E0E5E8`; y los de contraste, `#D70C0F` (errores) y `#F4E982` (aviso de turno). Las tipografías son Rubik en titulares e Inter en el texto. Todo está en [`src/app/globals.css`](src/app/globals.css).
 - **Nombre: "Merlin FM"**, en plan emisora interna, con "La canción del día" como subtítulo. Se cambia en [`src/lib/config.ts`](src/lib/config.ts).
 - **Escala 1–4.** Así lo pedía la especificación técnica. Cuatro botones grandes (🙉 No es lo mío · 😐 Pasable · 😊 Me gusta · 🔥 ¡Temazo!) se pulsan cómodamente desde el móvil. Para volver al 1–10 de la época del Excel:
   1. Cambia `MAX_SCORE` y `SCORE_OPTIONS` en [`src/lib/scores.ts`](src/lib/scores.ts).
@@ -164,7 +166,7 @@ supabase/
   migrations/            SQL versionado (esquema, RLS, funciones)
   seed.sql               Miembros iniciales del equipo
 src/
-  app/                   Rutas: / · /ranking · /historico · /historico/[id] · /admin
+  app/                   Rutas: / · /ranking · /historico · /historico/[id] · /calendario · /admin
   components/
     identity/            Provider de identidad, selector, PIN, menú de usuario
     picks/               Tarjeta de canción, reproductor, formulario, detalle
