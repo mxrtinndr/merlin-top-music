@@ -28,11 +28,12 @@ export function PickDetail({
   const canEdit = editable && presenter !== undefined && currentMember?.id === pick.presenter_id;
 
   return (
-    <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
       <PickCard
         pick={pick}
         presenter={presenter}
         showDate={showDate}
+        className="md:col-span-2 lg:col-span-1"
         action={
           canEdit ? (
             <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>

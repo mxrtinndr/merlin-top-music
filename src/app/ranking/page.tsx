@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { startOfMonthISO, startOfWeekISO, todayISO } from "@/lib/dates";
-import { getLeaderboard } from "@/lib/queries";
+import { getLeaderboard, getMembers, getTopPicks } from "@/lib/queries";
 import { formatScore, MAX_SCORE } from "@/lib/scores";
 import type { LeaderboardRow } from "@/lib/types";
 import { Card, Eyebrow } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { SegmentedLinks } from "@/components/ui/segmented-links";
 import { MemberAvatar } from "@/components/member-avatar";
 import { Podium } from "@/components/leaderboard/podium";
 import { LeaderboardList } from "@/components/leaderboard/leaderboard-list";
+import { PickListItem } from "@/components/picks/pick-list-item";
 
 export const metadata: Metadata = { title: "Ranking" };
 
@@ -37,7 +38,8 @@ export default async function RankingPage({ searchParams }: PageProps<"/ranking"
   const today = todayISO();
   const from = period === "semana" ? startOfWeekISO(today) : period === "mes" ? startOfMonthISO(today) : null;
 
-  const rows = await getLeaderboard(from);
+  const [rows, topPicks, members] = await Promise.all([getLeaderboard(from), getTopPicks(from), getMembers()]);
+  const memberById = new Map(members.map((member) => [member.id, member]));
   const ranked = rows.filter((row) => row.ratings_count > 0);
   const waiting = rows.filter((row) => row.ratings_count === 0 && row.active);
   const stats = summarize(rows);
@@ -81,6 +83,27 @@ export default async function RankingPage({ searchParams }: PageProps<"/ranking"
         </>
       )}
 
+      {topPicks.length > 0 && (
+        <section className="space-y-3">
+          <div>
+            <h2 className="text-lg font-semibold text-brand-800">Canciones mejor puntuadas</h2>
+            <p className="text-sm text-slate-500">Pulsa una para escucharla y ver sus comentarios en la portada.</p>
+          </div>
+          <div className="space-y-2">
+            {topPicks.map((pick, index) => (
+              <PickListItem
+                key={pick.id}
+                pick={pick}
+                presenter={memberById.get(pick.presenter_id)}
+                rank={index + 1}
+                rankEmoji={["🥇", "🥈", "🥉"][index] ?? "🎵"}
+                href={`/?cancion=${pick.id}`}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       {waiting.length > 0 && (
         <section>
           <h2 className="mb-3 text-sm font-semibold text-slate-500">Sin votos en este periodo</h2>
@@ -88,7 +111,7 @@ export default async function RankingPage({ searchParams }: PageProps<"/ranking"
             {waiting.map((row) => (
               <li
                 key={row.member_id}
-                className="flex items-center gap-2 rounded-full border border-slate-200 bg-white py-1 pl-1 pr-3 text-sm text-slate-600"
+                className="flex items-center gap-2 rounded-full border border-slate-200 bg-surface py-1 pl-1 pr-3 text-sm text-slate-600"
               >
                 <MemberAvatar member={row} size="xs" />
                 {row.name}
