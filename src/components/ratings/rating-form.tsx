@@ -7,6 +7,7 @@ import { createRating, errorMessage } from "@/lib/mutations";
 import { isValidScore, SCORE_OPTIONS } from "@/lib/scores";
 import { Button } from "@/components/ui/button";
 import { FormError, Textarea } from "@/components/ui/field";
+import { scoreColors } from "./score-colors";
 
 const COMMENT_MAX = 280;
 
@@ -34,10 +35,12 @@ export function RatingForm({ pickId, memberId }: { pickId: string; memberId: str
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4">
-      <div role="radiogroup" aria-label="Puntuación" className="grid grid-cols-4 gap-2">
+    <form onSubmit={submit} className="@container space-y-4">
+      {/* 2×2 en columnas estrechas (grid de escritorio), 4 en fila cuando hay sitio */}
+      <div role="radiogroup" aria-label="Puntuación" className="grid grid-cols-2 gap-2 @xs:grid-cols-4">
         {SCORE_OPTIONS.map((option) => {
           const selected = score === option.value;
+          const colors = scoreColors(option.value);
           return (
             <button
               key={option.value}
@@ -46,17 +49,16 @@ export function RatingForm({ pickId, memberId }: { pickId: string; memberId: str
               aria-checked={selected}
               onClick={() => setScore(option.value)}
               className={cn(
-                "group flex flex-col items-center gap-1 rounded-2xl border px-1 py-3 transition",
-                selected
-                  ? "border-brand-500 bg-brand-500 text-white shadow-md shadow-brand-500/30"
-                  : "border-slate-200 bg-surface text-brand-900 hover:border-brand-300 hover:bg-brand-50",
+                "group flex flex-col items-center gap-1 rounded-2xl border px-1 py-3 text-brand-900 transition",
+                selected ? cn(colors.soft, "shadow-md") : cn("border-slate-200 bg-surface", colors.hover),
               )}
             >
-              <span className={cn("text-2xl transition-transform", selected ? "scale-110" : "group-hover:scale-110")}>
-                {option.emoji}
-              </span>
+              <option.icon
+                aria-hidden
+                className={cn("size-6 transition-transform", colors.icon, selected ? "scale-110" : "group-hover:scale-110")}
+              />
               <span className="font-display text-lg font-bold leading-none">{option.value}</span>
-              <span className={cn("text-[11px] font-medium leading-tight", selected ? "text-white/80" : "text-slate-500")}>
+              <span className={cn("text-[11px] font-medium leading-tight", selected ? "text-brand-900" : "text-slate-500")}>
                 {option.label}
               </span>
             </button>
