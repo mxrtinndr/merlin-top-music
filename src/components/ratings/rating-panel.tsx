@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { MemberAvatar } from "@/components/member-avatar";
 import { useIdentity } from "@/components/identity/identity-provider";
+import { cn } from "@/lib/cn";
 import { RatingForm } from "./rating-form";
 import { RatingList, ScoreDistribution } from "./rating-list";
+import { scoreColors } from "./score-colors";
 
 /**
  * Dos tarjetas: "Votación" (puntuar, media y reparto) y "Comentarios" (qué ha
@@ -196,7 +198,7 @@ function ScoreBreakdown({ ratings }: { ratings: Rating[] }) {
               <MemberAvatar member={member} size="sm" />
               <span className="min-w-0 flex-1 truncate font-medium text-brand-900">{member?.name ?? "Alguien"}</span>
               <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-0.5 text-sm font-semibold tabular-nums text-brand-800">
-                {option?.emoji} {rating.score}
+                {option && <option.icon aria-hidden className={cn("size-3.5", scoreColors(rating.score).icon)} />} {rating.score}
               </span>
             </li>
           );
@@ -223,8 +225,13 @@ function MyRating({ rating }: { rating: Rating }) {
   const option = scoreOption(rating.score);
   return (
     <div className="flex items-center gap-4">
-      <div className="flex size-16 shrink-0 flex-col items-center justify-center rounded-2xl bg-brand-500 text-white shadow-md shadow-brand-500/30 animate-pop">
-        <span className="text-xl leading-none">{option?.emoji}</span>
+      <div
+        className={cn(
+          "flex size-16 shrink-0 flex-col items-center justify-center rounded-2xl text-white shadow-md animate-pop",
+          scoreColors(rating.score).solid,
+        )}
+      >
+        {option && <option.icon aria-hidden className="size-5" />}
         <span className="font-display text-xl font-bold leading-tight">{rating.score}</span>
       </div>
       <div className="min-w-0">

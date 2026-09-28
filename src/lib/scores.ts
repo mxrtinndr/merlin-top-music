@@ -1,3 +1,5 @@
+import { Flame, Meh, ThumbsDown, ThumbsUp, type LucideIcon } from "lucide-react";
+
 /**
  * Escala de puntuación. Si algún día el equipo quiere volver al 1–10, basta con
  * cambiar MAX_SCORE y SCORE_OPTIONS aquí y la constraint `ratings_score_range`
@@ -6,13 +8,13 @@
 export const MIN_SCORE = 1;
 export const MAX_SCORE = 4;
 
-export type ScoreOption = { value: number; label: string; emoji: string };
+export type ScoreOption = { value: number; label: string; icon: LucideIcon };
 
 export const SCORE_OPTIONS: readonly ScoreOption[] = [
-  { value: 1, label: "No es lo mío", emoji: "🙉" },
-  { value: 2, label: "Pasable", emoji: "😐" },
-  { value: 3, label: "Me gusta", emoji: "😊" },
-  { value: 4, label: "¡Temazo!", emoji: "🔥" },
+  { value: 1, label: "No es lo mío", icon: ThumbsDown },
+  { value: 2, label: "Pasable", icon: Meh },
+  { value: 3, label: "Me gusta", icon: ThumbsUp },
+  { value: 4, label: "¡Temazo!", icon: Flame },
 ];
 
 export function scoreOption(value: number): ScoreOption | undefined {

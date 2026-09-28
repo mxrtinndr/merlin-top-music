@@ -6,6 +6,7 @@ import type { Rating } from "@/lib/types";
 import { MemberAvatar } from "@/components/member-avatar";
 import { useIdentity } from "@/components/identity/identity-provider";
 import { ShowMoreList } from "@/components/ui/show-more";
+import { scoreColors } from "./score-colors";
 
 export function RatingList({
   ratings,
@@ -39,7 +40,7 @@ export function RatingList({
                       {rating.member_id === highlightId && <span className="ml-1.5 text-xs font-medium text-brand-500">(tú)</span>}
                     </p>
                     <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-50 px-2 py-0.5 text-sm font-semibold tabular-nums text-brand-800">
-                      {option?.emoji} {rating.score}
+                      {option && <option.icon aria-hidden className={cn("size-3.5", scoreColors(rating.score).icon)} />} {rating.score}
                     </span>
                   </div>
                   {rating.comment && <p className="mt-0.5 text-sm text-slate-600">{rating.comment}</p>}
@@ -90,11 +91,11 @@ export function ScoreDistribution({
               selected !== null && !active && "opacity-50",
             )}
           >
-            <span className="w-5 text-center" aria-hidden>{item.emoji}</span>
+            <item.icon aria-hidden className={cn("mx-0.5 size-4 shrink-0", scoreColors(item.value).icon)} />
             <span className="w-2 font-semibold tabular-nums text-slate-500">{item.value}</span>
             <span className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
               <span
-                className="block h-full origin-left rounded-full bg-brand-500 animate-grow"
+                className={cn("block h-full origin-left rounded-full animate-grow", scoreColors(item.value).solid)}
                 style={{ width: `${(item.count / max) * 100}%` }}
               />
             </span>
