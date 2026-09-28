@@ -59,11 +59,11 @@ export function MobileNav() {
               <Link
                 href={href}
                 className={cn(
-                  "flex flex-col items-center gap-1 py-2.5 text-[11px] font-semibold transition",
+                  "flex flex-col items-center gap-1.5 py-3.5 text-[13px] font-semibold transition",
                   active ? "text-brand-600" : "text-slate-400",
                 )}
               >
-                <Icon className={cn("size-5", active && "stroke-[2.4]")} />
+                <Icon className={cn("size-7", active && "stroke-[2.4]")} />
                 {label}
               </Link>
             </li>
