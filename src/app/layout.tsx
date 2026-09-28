@@ -79,7 +79,10 @@ async function App({ children }: { children: React.ReactNode }) {
         }
       />
       <SiteHeader turnMemberId={turnMemberId} />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-10 pt-6 md:pb-16 md:pt-8">{children}</main>
+      {/* En móvil, hueco abajo para que la barra de navegación fija no tape el contenido */}
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-6 md:pb-16 md:pt-8">
+        {children}
+      </main>
       <SiteFooter />
       <MobileNav />
     </IdentityProvider>

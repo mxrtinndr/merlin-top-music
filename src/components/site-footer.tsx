@@ -3,12 +3,15 @@ import { GitHubIcon, YouTubeIcon } from "@/components/brand-icons";
 
 const ICON_LINK = "text-slate-500 transition-all duration-200 hover:-translate-y-px";
 
-/** Pie de página: línea de marca y, en una fila por persona, su nombre y los iconos de sus perfiles. */
+/**
+ * Pie de página: línea de marca y, en una fila por persona, su nombre y los iconos de sus perfiles.
+ * Solo en escritorio: en móvil abajo va la barra de navegación.
+ */
 export function SiteFooter() {
   return (
-    <footer className="mt-8 bg-surface">
+    <footer className="mt-8 hidden bg-surface md:block">
       <div className="h-1 bg-linear-to-r from-deep-800 via-deep-600 to-brand-400" />
-      <ul className="mx-auto max-w-6xl space-y-2 px-4 pb-28 pt-6 text-sm md:pb-8">
+      <ul className="mx-auto max-w-6xl space-y-2 px-4 pb-8 pt-6 text-sm">
         {AUTHORS.map((author) => (
           <li key={author.name} className="flex items-center gap-2.5">
             <span className="font-semibold text-brand-900">{author.name}</span>
