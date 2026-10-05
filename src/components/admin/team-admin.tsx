@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { KeyRound, Pencil, Plus, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { adminClearPin, errorMessage, saveMember, updateMember } from "@/lib/mutations";
+import { adminClearPin, saveMember, updateMember } from "@/lib/mutations";
 import type { Member } from "@/lib/types";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import { MemberEditForm } from "@/components/member-edit-form";
 import { emptyMemberValue, MemberFields, toDraft, type MemberFormValue } from "@/components/member-fields";
 import { useIdentity } from "@/components/identity/identity-provider";
 import { useAdminCredentials } from "./admin-gate";
+import { useSaving } from "./use-saving";
 
 const EMPTY = emptyMemberValue({ emoji: "🎧", color: "#0470B3" });
 
@@ -53,30 +53,6 @@ export function TeamAdmin() {
       </Modal>
     </div>
   );
-}
-
-function useSaving() {
-  const router = useRouter();
-  const [saving, setSaving] = useState(false);
-  const [refreshing, startRefresh] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  const run = async (action: () => Promise<unknown>): Promise<boolean> => {
-    setSaving(true);
-    setError(null);
-    try {
-      await action();
-      startRefresh(() => router.refresh());
-      return true;
-    } catch (err) {
-      setError(errorMessage(err));
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return { run, busy: saving || refreshing, error };
 }
 
 function AddMemberCard() {

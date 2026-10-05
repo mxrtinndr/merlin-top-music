@@ -1,29 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, PartyPopper } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { addDaysISO, formatDayBadge } from "@/lib/dates";
-import type { DailyPick } from "@/lib/types";
+import type { DailyPick, Holiday } from "@/lib/types";
 
 const hrefFor = (date: string, today: string) => (date === today ? "/" : `/?dia=${date}`);
 
 /**
  * Selector de la semana en curso: flechas ‹ › y un botón por día para pasar de
- * una canción a otra sin ir al histórico. El fin de semana solo sale si hubo canción.
+ * una canción a otra sin ir al histórico. El fin de semana solo sale si hubo canción;
+ * los festivos salen con su confeti.
  */
 export function WeekNav({
   today,
   weekStart,
   selectedDate,
   weekPicks,
+  holidays,
 }: {
   today: string;
   weekStart: string;
   selectedDate: string;
   weekPicks: DailyPick[];
+  holidays: Holiday[];
 }) {
   const pickDates = new Set(weekPicks.map((pick) => pick.date));
+  const holidayByDate = new Map(holidays.map((holiday) => [holiday.date, holiday]));
   // Se puede ir a los días con canción y siempre a hoy (aunque aún no la haya).
   const reachable = [...new Set([...pickDates, today])].sort();
   const index = reachable.indexOf(selectedDate);
@@ -45,6 +49,7 @@ export function WeekNav({
           const { weekday, day } = formatDayBadge(date);
           const selected = date === selectedDate;
           const hasPick = pickDates.has(date);
+          const holiday = holidayByDate.get(date);
           const enabled = reachable.includes(date);
           const content = (
             <>
@@ -52,22 +57,28 @@ export function WeekNav({
                 {date === today ? "hoy" : weekday}
               </span>
               <span className="font-display text-base font-bold leading-tight">{day}</span>
-              <span
-                className={cn("size-1 rounded-full", hasPick ? (selected ? "bg-white" : "bg-brand-500") : "bg-transparent")}
-                aria-hidden
-              />
+              {holiday ? (
+                <PartyPopper className={cn("size-2.5", selected ? "text-white" : "text-amber-500")} aria-hidden />
+              ) : (
+                <span
+                  className={cn("my-[3px] size-1 rounded-full", hasPick ? (selected ? "bg-white" : "bg-brand-500") : "bg-transparent")}
+                  aria-hidden
+                />
+              )}
             </>
           );
           const className = cn(
             "flex min-w-11 flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 transition",
             selected
               ? "bg-brand-500 text-white shadow-sm shadow-brand-500/30"
-              : enabled
-                ? "text-brand-800 hover:bg-brand-50"
-                : "text-slate-300",
+              : holiday
+                ? "bg-linear-to-b from-amber-50 to-rose-50 text-amber-700"
+                : enabled
+                  ? "text-brand-800 hover:bg-brand-50"
+                  : "text-slate-300",
           );
           return (
-            <li key={date}>
+            <li key={date} title={holiday ? `Festivo${holiday.name ? `: ${holiday.name}` : ""}` : undefined}>
               {enabled && !selected ? (
                 <Link href={hrefFor(date, today)} scroll={false} className={className} aria-label={hasPick ? `Canción del ${weekday} ${day}` : "Hoy"}>
                   {content}

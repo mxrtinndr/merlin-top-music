@@ -5,7 +5,7 @@ import { connection } from "next/server";
 import { APP_NAME, APP_TAGLINE, COMPANY_NAME } from "@/lib/config";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { isWorkday, todayISO } from "@/lib/dates";
-import { getLatestPick, getMembers } from "@/lib/queries";
+import { getLatestPick, getMembers, getUpcomingHolidays } from "@/lib/queries";
 import { IdentityProvider } from "@/components/identity/identity-provider";
 import { SiteHeader } from "@/components/site-header";
 import { MobileNav } from "@/components/site-nav";
@@ -49,24 +49,30 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
 
 async function loadData() {
   try {
-    const [members, latestPick] = await Promise.all([getMembers(), getLatestPick()]);
-    return { members, latestPick, error: null };
+    const [members, latestPick, holidays] = await Promise.all([getMembers(), getLatestPick(), getUpcomingHolidays()]);
+    return { members, latestPick, holidayDates: holidays.map((holiday) => holiday.date), error: null };
   } catch (error) {
     unstable_rethrow(error); // deja pasar las señales internas de Next (render dinámico)
-    return { members: [], latestPick: null, error: error instanceof Error ? error.message : String(error) };
+    return {
+      members: [],
+      latestPick: null,
+      holidayDates: [],
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 
 async function App({ children }: { children: React.ReactNode }) {
-  const { members, latestPick, error } = await loadData();
+  const { members, latestPick, holidayDates, error } = await loadData();
   if (error) return <SetupNotice error={error} />;
-  // Si la última canción es de un día anterior, hoy le toca a quien nominó (el finde no hay turno).
+  // Si la última canción es de un día anterior, hoy le toca a quien nominó (el finde y los festivos no hay turno).
   const today = todayISO();
   const turnMemberId =
-    latestPick && latestPick.date < today && isWorkday(today) ? latestPick.next_presenter_id : null;
+    latestPick && latestPick.date < today && isWorkday(today, holidayDates) ? latestPick.next_presenter_id : null;
   return (
     <IdentityProvider initialMembers={members}>
       <PickNotifier
+        holidays={holidayDates}
         latestPick={
           latestPick && {
             id: latestPick.id,

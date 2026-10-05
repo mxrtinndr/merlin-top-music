@@ -39,11 +39,13 @@ function useToday(): string {
  * Escucha en tiempo real las canciones del día: refresca la app cuando alguien
  * publica o edita una, y avisa con notificaciones de escritorio (una sola vez
  * por evento, y solo de los tipos que tengas activados):
- * - nomination: la canción de hoy te nomina (para mañana, o el lunes si es viernes).
- * - turn: hoy te toca a ti (te nominaron en la última canción). Solo de lunes a viernes.
+ * - nomination: la canción de hoy te nomina (para el siguiente día laborable).
+ * - turn: hoy te toca a ti (te nominaron en la última canción). Solo en días laborables.
+ *
+ * `holidays`: fechas ISO de los festivos, que se saltan igual que el fin de semana.
  * - newPick: alguien ha publicado la canción de hoy y puedes puntuarla.
  */
-export function PickNotifier({ latestPick }: { latestPick: LatestPick | null }) {
+export function PickNotifier({ latestPick, holidays }: { latestPick: LatestPick | null; holidays: string[] }) {
   const router = useRouter();
   const { currentMember, memberById } = useIdentity();
   const status = useNotificationStatus();
@@ -98,7 +100,7 @@ export function PickNotifier({ latestPick }: { latestPick: LatestPick | null }) 
     }
 
     if (isToday && nominatedMe) {
-      const turnDay = relativeDayLabel(nextWorkdayISO(latestPick.date), latestPick.date);
+      const turnDay = relativeDayLabel(nextWorkdayISO(latestPick.date, holidays), latestPick.date);
       notify(
         "nomination",
         latestPick.id,
@@ -108,7 +110,7 @@ export function PickNotifier({ latestPick }: { latestPick: LatestPick | null }) 
     }
 
     // La última canción es de otro día y te nominó: hoy es tu turno. Un aviso por día laborable.
-    if (latestPick.date < today && nominatedMe && isWorkday(today)) {
+    if (latestPick.date < today && nominatedMe && isWorkday(today, holidays)) {
       notify(
         "turn",
         today,
@@ -116,7 +118,7 @@ export function PickNotifier({ latestPick }: { latestPick: LatestPick | null }) 
         `${presenterName} te nominó: elige la canción del día y nomina a la siguiente persona.`,
       );
     }
-  }, [latestPick, currentMember, presenter, status, prefs, today, router]);
+  }, [latestPick, holidays, currentMember, presenter, status, prefs, today, router]);
 
   return null;
 }

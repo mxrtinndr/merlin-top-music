@@ -61,6 +61,7 @@ Están en [`supabase/migrations/`](supabase/migrations) y se aplican en orden:
 3. `20260925090000_member_photos.sql`: columna `avatar_url`, bucket de Storage `avatars` y sus políticas. No hay que crear el bucket a mano.
 4. `20260926090000_realtime_daily_picks.sql`: activa Realtime en `daily_picks` (refresco en vivo y avisos de escritorio).
 5. `20260927090000_admin_accounts.sql`: columna `is_admin` (Martín y Sara quedan como admins) y `admin_clear_member_pin` pasa a exigir el PIN de un admin.
+6. `20261005090000_holidays.sql`: tabla `holidays` (días festivos), trigger que impide publicar canción un festivo y funciones `admin_set_holiday` / `admin_delete_holiday`, que exigen el PIN de un admin.
 
 **Opción A, Supabase CLI** (recomendada):
 
@@ -148,6 +149,7 @@ Las mismas validaciones están en el frontend, con mensajes en castellano. Si al
 - **Identidad**: se guarda el id del miembro en `localStorage` (`merlin-fm:member-id`). Se cambia desde el menú de la cabecera.
 - **PIN opcional (4 dígitos)**: se guarda con bcrypt en una tabla que el cliente no puede leer. Se pide al elegir un perfil protegido. Si alguien lo olvida, un admin se lo quita desde `/admin`.
 - **Cuentas de administración**: las marca `members.is_admin` (de inicio, Martín y Sara). Solo ellas ven *Equipo* en la navegación y el menú, y `/admin` pide ser admin, **tener PIN** (sin él, cualquiera podría elegir su nombre) y confirmarlo al entrar. Para dar o quitar el rol, en el SQL Editor: `update public.members set is_admin = true where name = 'Nombre';`.
+- **Días festivos**: los admins los marcan en `/admin`. Ese día no hay canción, igual que el fin de semana: si el miércoles es festivo, quien presenta el martes nomina para el jueves. Salen destacados en el calendario, en el selector de la semana y en la portada (con aviso de que el turno se salta el festivo).
 - **Límites de seguridad**: no hay login y la API es pública con la clave anónima. Quitar PIN sí se comprueba en la base de datos, pero dar de alta, editar o desactivar miembros sigue abierto a quien escriba directamente contra la API: el control de `/admin` es de la interfaz. Para algo más serio habría que pasar a Supabase Auth.
 - **Ranking**: la media es sobre **todas** las notas recibidas (no la media de medias por canción). Hay desempate por nº de votos. Quien no tiene votos en el periodo aparece aparte.
 - **Refresco automático**: al volver a la pestaña (p. ej. la dejaste abierta ayer) se recargan los datos.

@@ -18,6 +18,7 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
   ratings_one_per_member: "Ya habías puntuado esta canción.",
   ratings_score_range: "La puntuación no es válida.",
   ratings_comment_length: "El comentario es demasiado largo (máx. 280 caracteres).",
+  holidays_name_length: "El nombre del festivo es demasiado largo (máx. 60 caracteres).",
 };
 
 function toMutationError(error: PostgrestError): MutationError {
@@ -159,6 +160,24 @@ export async function adminClearPin(admin: AdminCredentials, memberId: string): 
       p_admin_pin: admin.pin,
       p_member_id: memberId,
     }),
+  );
+}
+
+/** Marca (o renombra) un día laborable como festivo: ese día no hay canción. */
+export async function adminSetHoliday(admin: AdminCredentials, date: string, name: string | null): Promise<void> {
+  await run(
+    getSupabase().rpc("admin_set_holiday", {
+      p_admin_id: admin.adminId,
+      p_admin_pin: admin.pin,
+      p_date: date,
+      p_name: name,
+    }),
+  );
+}
+
+export async function adminDeleteHoliday(admin: AdminCredentials, date: string): Promise<void> {
+  await run(
+    getSupabase().rpc("admin_delete_holiday", { p_admin_id: admin.adminId, p_admin_pin: admin.pin, p_date: date }),
   );
 }
 

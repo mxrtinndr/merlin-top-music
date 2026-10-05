@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { PartyPopper } from "lucide-react";
 import { formatLongDate, isWorkday, nextWorkdayISO, relativeDayLabel } from "@/lib/dates";
-import type { DailyPick, Member, Rating } from "@/lib/types";
+import type { DailyPick, Holiday, Member, Rating } from "@/lib/types";
 import { useRefreshOnFocus } from "@/lib/use-refresh-on-focus";
 import { Card, Eyebrow } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export function TodayView({
   ratings,
   previousPick,
   weekPicks,
+  holidays,
   stats,
 }: {
   today: string;
@@ -37,6 +39,8 @@ export function TodayView({
   ratings: Rating[];
   previousPick: DailyPick | null;
   weekPicks: DailyPick[];
+  /** Festivos de esta semana en adelante. */
+  holidays: Holiday[];
   stats: WeekStats;
 }) {
   useRefreshOnFocus();
@@ -47,10 +51,15 @@ export function TodayView({
   const presenter = todayPick ? memberById(todayPick.presenter_id) : nominated?.active ? nominated : undefined;
   const next = todayPick ? memberById(todayPick.next_presenter_id) : undefined;
   const viewingToday = selectedDate === today;
-  // Solo se presenta de lunes a viernes: el finde, quien está nominada presenta el lunes.
-  const workday = isWorkday(today);
-  const presenterDay = todayPick || workday ? "hoy" : relativeDayLabel(nextWorkdayISO(today), today);
-  const nextDay = relativeDayLabel(nextWorkdayISO(today), today);
+  // Solo se presenta en días laborables: el finde o un festivo, quien está nominada presenta el siguiente.
+  const holidayDates = holidays.map((holiday) => holiday.date);
+  const workday = isWorkday(today, holidayDates);
+  const nextWorkday = nextWorkdayISO(today, holidayDates);
+  const presenterDay = todayPick || workday ? "hoy" : relativeDayLabel(nextWorkday, today);
+  const nextDay = relativeDayLabel(nextWorkday, today);
+  const todayHoliday = holidays.find((holiday) => holiday.date === today);
+  // Festivos entre hoy y el siguiente turno: explican por qué el turno se salta días.
+  const skipped = holidays.filter((holiday) => holiday.date > today && holiday.date < nextWorkday);
 
   return (
     <div className="space-y-6">
@@ -75,8 +84,10 @@ export function TodayView({
         currentMemberId={currentMember?.id}
       />
 
+      {skipped.length > 0 && <HolidayNotice holidays={skipped} today={today} nextDay={nextDay} />}
+
       <section className="space-y-3" aria-label="Canciones de esta semana">
-        <WeekNav today={today} weekStart={weekStart} selectedDate={selectedDate} weekPicks={weekPicks} />
+        <WeekNav today={today} weekStart={weekStart} selectedDate={selectedDate} weekPicks={weekPicks} holidays={holidays} />
         {selectedDate < weekStart && (
           <p className="flex flex-wrap items-center gap-x-2 rounded-xl bg-brand-50 px-4 py-2.5 text-sm text-brand-900">
             Estás viendo la canción del <strong className="font-semibold">{formatLongDate(selectedDate)}</strong>.
@@ -88,7 +99,7 @@ export function TodayView({
         {pick ? (
           <PickDetail key={pick.id} pick={pick} ratings={ratings} editable={viewingToday} showDate={!viewingToday} />
         ) : (
-          <NoPickYet today={today} presenter={presenter} workday={workday} />
+          <NoPickYet today={today} presenter={presenter} workday={workday} holiday={todayHoliday} backDay={presenterDay} />
         )}
       </section>
 
@@ -97,13 +108,30 @@ export function TodayView({
   );
 }
 
-function NoPickYet({ today, presenter, workday }: { today: string; presenter: Member | undefined; workday: boolean }) {
+function NoPickYet({
+  today,
+  presenter,
+  workday,
+  holiday,
+  backDay,
+}: {
+  today: string;
+  presenter: Member | undefined;
+  workday: boolean;
+  /** El festivo de hoy, si lo es. */
+  holiday: Holiday | undefined;
+  /** Cuándo vuelve la canción si hoy no hay ("el lunes", "mañana"…). */
+  backDay: string;
+}) {
   const { currentMember, ready, openPicker } = useIdentity();
   const [takingOver, setTakingOver] = useState(false);
 
   if (!ready) return <Card className="h-72 animate-pulse bg-surface/60" aria-busy="true" />;
 
-  if (!workday) return <Weekend presenter={presenter} isMe={!!currentMember && presenter?.id === currentMember.id} />;
+  if (!workday) {
+    const isMe = !!currentMember && presenter?.id === currentMember.id;
+    return <DayOff holiday={holiday} backDay={backDay} presenter={presenter} isMe={isMe} />;
+  }
 
   const isMyTurn = currentMember !== null && (presenter?.id === currentMember.id || !presenter || takingOver);
 
@@ -168,22 +196,97 @@ function NoPickYet({ today, presenter, workday }: { today: string; presenter: Me
   );
 }
 
-function Weekend({ presenter, isMe }: { presenter: Member | undefined; isMe: boolean }) {
+/** Hoy no hay canción: fin de semana o festivo. */
+function DayOff({
+  holiday,
+  backDay,
+  presenter,
+  isMe,
+}: {
+  holiday: Holiday | undefined;
+  backDay: string;
+  presenter: Member | undefined;
+  isMe: boolean;
+}) {
+  const turn = isMe
+    ? "Te toca a ti: ve pensando qué vas a poner 🎶"
+    : presenter
+      ? `Presenta ${presenter.name}.`
+      : "Quien llegue primero estrena el turno.";
+
+  if (!holiday) {
+    return (
+      <Card className="px-6 py-12 text-center animate-rise">
+        <p className="text-5xl" aria-hidden>
+          🌴
+        </p>
+        <h2 className="mt-4 text-xl font-semibold text-brand-800">Es fin de semana</h2>
+        <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">
+          La canción del día vuelve {backDay}. {turn}
+        </p>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="px-6 py-12 text-center animate-rise">
-      <p className="text-5xl" aria-hidden>
-        🌴
-      </p>
-      <h2 className="mt-4 text-xl font-semibold text-brand-800">Es fin de semana</h2>
-      <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">
-        La canción del día vuelve el lunes.{" "}
-        {isMe
-          ? "Te toca a ti: ve pensando qué vas a poner 🎶"
-          : presenter
-            ? `Presenta ${presenter.name}.`
-            : "Quien llegue primero estrena la semana."}
-      </p>
-    </Card>
+    <section className="relative overflow-hidden rounded-2xl border border-amber-200 bg-linear-to-br from-amber-50 via-surface to-rose-50 px-6 py-12 text-center shadow-card animate-rise">
+      <Confetti />
+      <div className="relative">
+        <span className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-linear-to-br from-amber-400 to-rose-500 text-white shadow-lift animate-float">
+          <PartyPopper className="size-8" aria-hidden />
+        </span>
+        <p className="mt-5 text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700">Hoy es festivo</p>
+        <h2 className="mt-1 text-2xl font-bold text-brand-800">{holiday.name ?? "Día sin canción"}</h2>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
+          Hoy descansa la música. La canción del día vuelve {backDay}. {turn}
+        </p>
+      </div>
+    </section>
+  );
+}
+
+const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+/** Aviso bajo los turnos: el siguiente turno se salta uno o varios festivos. */
+function HolidayNotice({ holidays, today, nextDay }: { holidays: Holiday[]; today: string; nextDay: string }) {
+  const days = new Intl.ListFormat("es", { type: "conjunction" }).format(
+    holidays.map((holiday) => {
+      const day = relativeDayLabel(holiday.date, today);
+      return holiday.name ? `${day} (${holiday.name})` : day;
+    }),
+  );
+  return (
+    <p className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-linear-to-r from-amber-50 to-rose-50 px-4 py-2.5 text-sm text-slate-600 animate-rise">
+      <PartyPopper className="mt-0.5 size-4 shrink-0 text-amber-500" aria-hidden />
+      <span>
+        {capitalize(days)} {holidays.length > 1 ? "son festivos" : "es festivo"}: el siguiente turno pasa a{" "}
+        <strong className="font-semibold text-brand-900">{nextDay}</strong>.
+      </span>
+    </p>
+  );
+}
+
+/** Confeti decorativo para los festivos. */
+const CONFETTI = [
+  { left: "8%", top: "18%", className: "bg-amber-400 rotate-12" },
+  { left: "20%", top: "72%", className: "bg-rose-400 -rotate-12" },
+  { left: "84%", top: "22%", className: "bg-brand-400 rotate-45" },
+  { left: "90%", top: "64%", className: "bg-amber-300 -rotate-6" },
+  { left: "72%", top: "84%", className: "bg-rose-300 rotate-12" },
+  { left: "30%", top: "12%", className: "bg-brand-300 -rotate-45" },
+];
+
+function Confetti() {
+  return (
+    <div className="pointer-events-none absolute inset-0" aria-hidden>
+      {CONFETTI.map((piece, index) => (
+        <span
+          key={index}
+          className={`absolute h-3 w-1.5 rounded-full opacity-70 ${piece.className}`}
+          style={{ left: piece.left, top: piece.top }}
+        />
+      ))}
+    </div>
   );
 }
 

@@ -3,7 +3,7 @@
 // "Publicar en un canal cuando se reciba una solicitud de webhook".
 
 import { nextWorkdayISO, relativeDayLabel } from "./dates";
-import type { DailyPick, Member } from "./types";
+import type { DailyPick, Holiday, Member } from "./types";
 
 export const teamsWebhookUrl = process.env.TEAMS_WEBHOOK_URL;
 
@@ -11,15 +11,21 @@ type TextBlock = { type: "TextBlock"; text: string; wrap: true; size?: string; w
 
 const text = (value: string, extra: Partial<TextBlock> = {}): TextBlock => ({ type: "TextBlock", text: value, wrap: true, ...extra });
 
-/** Tarjeta adaptativa: canción, quién la presenta, su comentario y a quién le toca después. */
-export function newPickCard(pick: DailyPick, presenter: Member | undefined, next: Member | undefined, appUrl: string) {
+/** Tarjeta adaptativa: canción, quién la presenta, su comentario y a quién le toca después (saltando festivos). */
+export function newPickCard(
+  pick: DailyPick,
+  presenter: Member | undefined,
+  next: Member | undefined,
+  holidays: Holiday[],
+  appUrl: string,
+) {
   const body: TextBlock[] = [
     text("🎵 Nueva canción del día", { size: "Large", weight: "Bolder" }),
     text(`**${presenter?.name ?? "Alguien"}** ha recomendado **${pick.song_title}** de ${pick.song_artist}.`),
   ];
   if (pick.presenter_comment) body.push(text(`“${pick.presenter_comment}”`, { isSubtle: true }));
   if (next) {
-    const turnDay = relativeDayLabel(nextWorkdayISO(pick.date), pick.date);
+    const turnDay = relativeDayLabel(nextWorkdayISO(pick.date, holidays.map((holiday) => holiday.date)), pick.date);
     body.push(text(`🎤 Nominación para el siguiente turno (${turnDay}): **${next.name}**. ¡Ve pensando tu canción!`));
   }
 
