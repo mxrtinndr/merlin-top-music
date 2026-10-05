@@ -58,15 +58,18 @@ export function weekdayIndex(iso: string): number {
   return (parseISODate(iso).getUTCDay() + 6) % 7;
 }
 
-/** Lunes a viernes: la canción del día solo se pone en días laborables. */
-export function isWorkday(iso: string): boolean {
-  return weekdayIndex(iso) < 5;
+/**
+ * La canción del día solo se pone en días laborables: de lunes a viernes y que
+ * no sean festivo (`holidays`: fechas ISO marcadas desde /admin).
+ */
+export function isWorkday(iso: string, holidays: readonly string[] = []): boolean {
+  return weekdayIndex(iso) < 5 && !holidays.includes(iso);
 }
 
-/** Siguiente día laborable tras la fecha dada: después del viernes va el lunes. */
-export function nextWorkdayISO(iso: string): string {
+/** Siguiente día laborable tras la fecha dada: después del viernes va el lunes, y los festivos se saltan. */
+export function nextWorkdayISO(iso: string, holidays: readonly string[] = []): string {
   let date = addDaysISO(iso, 1);
-  while (!isWorkday(date)) date = addDaysISO(date, 1);
+  while (!isWorkday(date, holidays)) date = addDaysISO(date, 1);
   return date;
 }
 
@@ -85,10 +88,11 @@ export function formatLongDate(iso: string): string {
   return format(iso, { weekday: "long", day: "numeric", month: "long" });
 }
 
-/** Cuándo cae una fecha vista desde otra: "hoy", "mañana" o "el lunes". */
+/** Cuándo cae una fecha vista desde otra: "hoy", "mañana", "el lunes" o, a más de una semana, "el lunes 12". */
 export function relativeDayLabel(iso: string, from: string): string {
   if (iso === from) return "hoy";
   if (iso === addDaysISO(from, 1)) return "mañana";
+  if (iso > addDaysISO(from, 6)) return `el ${format(iso, { weekday: "long", day: "numeric" })}`;
   return `el ${format(iso, { weekday: "long" })}`;
 }
 
@@ -102,10 +106,11 @@ export function formatMonth(iso: string): string {
   return format(iso, { month: "long", year: "numeric" });
 }
 
-/** "mié 24" */
-export function formatDayBadge(iso: string): { weekday: string; day: string } {
+/** "mié 24" (y el mes abreviado, "sept") */
+export function formatDayBadge(iso: string): { weekday: string; day: string; month: string } {
   return {
     weekday: format(iso, { weekday: "short" }).replace(".", ""),
     day: format(iso, { day: "numeric" }),
+    month: format(iso, { month: "short" }).replace(".", ""),
   };
 }

@@ -63,3 +63,10 @@ export type MemberInput = {
   emoji: string;
   color: string;
 };
+
+/** Día laborable sin canción. El fin de semana no hace falta marcarlo. */
+export type Holiday = {
+  /** Fecha ISO (YYYY-MM-DD). */
+  date: string;
+  name: string | null;
+};

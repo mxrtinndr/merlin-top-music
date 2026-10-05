@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, PartyPopper } from "lucide-react";
 import { cn } from "@/lib/cn";
 import {
   addDaysISO,
@@ -13,8 +13,8 @@ import {
   todayISO,
   weekdayIndex,
 } from "@/lib/dates";
-import { getMembers, getPicksBetween } from "@/lib/queries";
-import type { DailyPick, Member } from "@/lib/types";
+import { getHolidays, getMembers, getPicksBetween } from "@/lib/queries";
+import type { DailyPick, Holiday, Member } from "@/lib/types";
 import { Card, Eyebrow } from "@/components/ui/card";
 import { MemberAvatar, MemberChip } from "@/components/member-avatar";
 import { ScoreBadge } from "@/components/score-badge";
@@ -43,9 +43,19 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   const month = parseMonth((await searchParams).mes, currentMonth);
   const lastDay = addDaysISO(month, daysInMonth(month) - 1);
 
-  const [picks, members] = await Promise.all([getPicksBetween(month, lastDay), getMembers()]);
+  const [picks, members, holidays] = await Promise.all([
+    getPicksBetween(month, lastDay),
+    getMembers(),
+    getHolidays(month, lastDay),
+  ]);
   const memberById = new Map(members.map((member) => [member.id, member]));
   const byDate = new Map(picks.map((pick) => [pick.date, pick]));
+  const holidayByDate = new Map(holidays.map((holiday) => [holiday.date, holiday]));
+  // Lista para móvil: canciones y festivos del mes, por fecha.
+  const agenda = [
+    ...picks.map((pick) => ({ date: pick.date, pick, holiday: undefined })),
+    ...holidays.map((holiday) => ({ date: holiday.date, pick: undefined, holiday })),
+  ].sort((a, b) => a.date.localeCompare(b.date));
   const days = Array.from({ length: daysInMonth(month) }, (_, index) => addDaysISO(month, index));
   const previous = addMonthsISO(month, -1);
   const next = addMonthsISO(month, 1);
@@ -100,10 +110,13 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
           ))}
           {days.map((date) => {
             const pick = byDate.get(date);
+            const holiday = holidayByDate.get(date);
             return (
               <li key={date}>
                 {pick ? (
                   <DayWithSong pick={pick} presenter={memberById.get(pick.presenter_id)} isToday={date === today} />
+                ) : holiday ? (
+                  <HolidayDay holiday={holiday} isToday={date === today} />
                 ) : (
                   <EmptyDay date={date} today={today} />
                 )}
@@ -111,9 +124,18 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
             );
           })}
         </ol>
+
+        {holidays.length > 0 && (
+          <p className="mt-3 flex items-center justify-end gap-1.5 px-1 text-[11px] text-slate-500">
+            <span className="flex size-4 items-center justify-center rounded bg-linear-to-br from-amber-400 to-rose-500 text-white" aria-hidden>
+              <PartyPopper className="size-2.5" />
+            </span>
+            Festivo: ese día no hay canción
+          </p>
+        )}
       </Card>
 
-      {picks.length === 0 ? (
+      {agenda.length === 0 ? (
         <Card className="px-6 py-10 text-center">
           <p className="text-3xl">📅</p>
           <p className="mt-2 font-semibold text-brand-800">Este mes no sonó ninguna canción</p>
@@ -121,24 +143,45 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
       ) : (
         // En móvil las casillas son pequeñas: debajo va el detalle de cada día.
         <ul className="space-y-2 md:hidden">
-          {picks.map((pick) => (
-            <li key={pick.id}>
-              <Link
-                href={songHref(pick)}
-                className="flex items-center gap-3 rounded-2xl border border-slate-200/60 bg-surface p-3 shadow-card transition hover:shadow-lift"
-              >
-                <SongCover pick={pick} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{formatLongDate(pick.date)}</p>
-                  <p className="truncate font-semibold text-brand-900">{pick.song_title}</p>
-                  <MemberChip member={memberById.get(pick.presenter_id)} className="text-xs" />
-                </div>
-                <ScoreBadge value={pick.avg_score} />
-              </Link>
+          {agenda.map(({ date, pick, holiday }) => (
+            <li key={date}>
+              {holiday ? <HolidayRow holiday={holiday} /> : <PickRow pick={pick} presenter={memberById.get(pick.presenter_id)} />}
             </li>
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function PickRow({ pick, presenter }: { pick: DailyPick; presenter: Member | undefined }) {
+  return (
+    <Link
+      href={songHref(pick)}
+      className="flex items-center gap-3 rounded-2xl border border-slate-200/60 bg-surface p-3 shadow-card transition hover:shadow-lift"
+    >
+      <SongCover pick={pick} />
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">{formatLongDate(pick.date)}</p>
+        <p className="truncate font-semibold text-brand-900">{pick.song_title}</p>
+        <MemberChip member={presenter} className="text-xs" />
+      </div>
+      <ScoreBadge value={pick.avg_score} />
+    </Link>
+  );
+}
+
+function HolidayRow({ holiday }: { holiday: Holiday }) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-linear-to-r from-amber-50 to-rose-50 p-3">
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-amber-400 to-rose-500 text-white shadow-sm">
+        <PartyPopper className="size-6" aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">{formatLongDate(holiday.date)}</p>
+        <p className="truncate font-semibold text-brand-900">{holiday.name ?? "Festivo"}</p>
+        <p className="text-xs text-slate-500">Sin canción: el turno pasa al siguiente día</p>
+      </div>
     </div>
   );
 }
@@ -153,6 +196,37 @@ function EmptyDay({ date, today }: { date: string; today: string }) {
       )}
     >
       {Number(date.slice(8))}
+    </div>
+  );
+}
+
+/** Casilla de festivo: degradado cálido con confeti, y (desde md) el nombre del festivo. */
+function HolidayDay({ holiday, isToday }: { holiday: Holiday; isToday: boolean }) {
+  const label = holiday.name ?? "Festivo";
+  return (
+    <div
+      title={`${label}\nSin canción del día`}
+      className={cn(
+        "relative flex aspect-square flex-col overflow-hidden rounded-lg border border-amber-200 bg-linear-to-br from-amber-50 via-amber-50 to-rose-50 p-1 sm:p-2 md:aspect-auto md:h-full md:min-h-32",
+        isToday && "ring-2 ring-amber-400 ring-offset-2 ring-offset-surface",
+      )}
+    >
+      {/* Confeti */}
+      <span className="absolute right-[18%] top-[14%] h-2 w-1 rotate-12 rounded-full bg-rose-400/70" aria-hidden />
+      <span className="absolute left-[22%] bottom-[16%] hidden h-2 w-1 -rotate-45 rounded-full bg-brand-400/60 sm:block" aria-hidden />
+      <span className="absolute right-[12%] bottom-[28%] hidden size-1.5 rounded-full bg-amber-400/80 sm:block" aria-hidden />
+
+      <span className="relative text-xs font-bold tabular-nums text-amber-700 sm:text-sm">{Number(holiday.date.slice(8))}</span>
+      <div className="relative flex flex-1 flex-col items-center justify-center gap-1.5 text-center">
+        <span className="flex size-6 items-center justify-center rounded-full bg-linear-to-br from-amber-400 to-rose-500 text-white shadow-sm sm:size-9 md:size-10">
+          <PartyPopper className="size-3.5 sm:size-5" aria-hidden />
+        </span>
+        <span className="hidden text-[10px] font-bold uppercase tracking-[0.14em] text-amber-700 md:block">Festivo</span>
+        <span className="sr-only md:hidden">Festivo{holiday.name ? `: ${holiday.name}` : ""}. Sin canción.</span>
+        {holiday.name && (
+          <span className="hidden text-xs font-semibold leading-tight text-brand-900 md:line-clamp-2">{holiday.name}</span>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 // Lecturas para Server Components. No importar desde componentes cliente.
 import { cache } from "react";
 import { connection } from "next/server";
+import { startOfWeekISO, todayISO } from "./dates";
 import { getSupabase } from "./supabase";
-import type { DailyPick, LeaderboardRow, Member, Rating } from "./types";
+import type { DailyPick, Holiday, LeaderboardRow, Member, Rating } from "./types";
 
 const PICK_COLUMNS =
   "id, date, presenter_id, song_title, song_artist, song_url, presenter_comment, next_presenter_id, created_at, ratings_count, avg_score";
@@ -125,3 +126,17 @@ export async function getLeaderboard(from: string | null): Promise<LeaderboardRo
   await connection();
   return unwrap(await getSupabase().rpc("get_leaderboard", { p_from: from, p_to: null }));
 }
+
+/** Festivos desde una fecha (incluida) y, si se da, hasta otra, por orden. */
+export async function getHolidays(from: string, to?: string): Promise<Holiday[]> {
+  await connection();
+  let query = getSupabase().from("holidays").select("date, name").gte("date", from);
+  if (to) query = query.lte("date", to);
+  return unwrap(await query.order("date"));
+}
+
+/**
+ * Festivos de esta semana en adelante: bastan para saber si hoy hay canción y
+ * cuándo es el siguiente turno. Memoizado por request: layout y portada lo comparten.
+ */
+export const getUpcomingHolidays = cache(async (): Promise<Holiday[]> => getHolidays(startOfWeekISO(todayISO())));

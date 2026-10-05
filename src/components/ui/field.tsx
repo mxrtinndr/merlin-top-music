@@ -40,10 +40,6 @@ export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
   return <textarea className={cn(CONTROL, "min-h-24 resize-y", className)} {...props} />;
 }
 
-export function Select({ className, ...props }: ComponentProps<"select">) {
-  return <select className={cn(CONTROL, "h-11 appearance-auto", className)} {...props} />;
-}
-
 export function FormError({ message }: { message: string | null }) {
   if (!message) return null;
   return (

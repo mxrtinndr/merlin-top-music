@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { isISODate, startOfWeekISO, todayISO } from "@/lib/dates";
-import { getLatestPickBefore, getPickById, getPicksBetween, getRatingsForPick } from "@/lib/queries";
+import { getLatestPickBefore, getPickById, getPicksBetween, getRatingsForPick, getUpcomingHolidays } from "@/lib/queries";
 import { detectGenres } from "@/lib/week-genres";
 import { computeWeekStats } from "@/lib/week-stats";
 import { TodayView } from "@/components/today/today-view";
@@ -16,10 +16,11 @@ export default async function TodayPage({ searchParams }: PageProps<"/">) {
   const requested = params.dia;
   // ?cancion=<id>: cualquier canción (p. ej. desde el Ranking), aunque no sea de esta semana.
   const songId = typeof params.cancion === "string" && UUID.test(params.cancion) ? params.cancion : null;
-  const [weekPicks, previousPick, linkedPick] = await Promise.all([
+  const [weekPicks, previousPick, linkedPick, holidays] = await Promise.all([
     getPicksBetween(weekStart, today),
     getLatestPickBefore(today),
     songId ? getPickById(songId) : null,
+    getUpcomingHolidays(),
   ]);
 
   const todayPick = weekPicks.find((pick) => pick.date === today) ?? null;
@@ -40,6 +41,7 @@ export default async function TodayPage({ searchParams }: PageProps<"/">) {
       ratings={ratings}
       previousPick={previousPick}
       weekPicks={weekPicks}
+      holidays={holidays}
       stats={computeWeekStats(weekPicks, genreById)}
     />
   );

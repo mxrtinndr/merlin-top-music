@@ -1,5 +1,5 @@
 import type { NextRequest } from "next/server";
-import { getMembers, getPickById } from "@/lib/queries";
+import { getHolidays, getMembers, getPickById } from "@/lib/queries";
 import { newPickCard, teamsWebhookUrl } from "@/lib/teams";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -21,14 +21,15 @@ export async function POST(request: NextRequest) {
     return new Response(null, { status: 204 });
   }
 
-  const [pick, members] = await Promise.all([getPickById(pickId), getMembers()]);
+  const pick = await getPickById(pickId);
   if (!pick || Date.now() - new Date(pick.created_at).getTime() > MAX_AGE_MS) {
     return new Response(null, { status: 204 });
   }
   notified.add(pickId);
+  const [members, holidays] = await Promise.all([getMembers(), getHolidays(pick.date)]);
 
   const byId = new Map(members.map((member) => [member.id, member]));
-  const card = newPickCard(pick, byId.get(pick.presenter_id), byId.get(pick.next_presenter_id), request.nextUrl.origin);
+  const card = newPickCard(pick, byId.get(pick.presenter_id), byId.get(pick.next_presenter_id), holidays, request.nextUrl.origin);
   const response = await fetch(teamsWebhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
