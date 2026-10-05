@@ -7,7 +7,8 @@ import { createPick, errorMessage, updatePick } from "@/lib/mutations";
 import { detectProvider, getSongEmbed, isHttpUrl } from "@/lib/music";
 import type { DailyPick, Member, PickInput } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Field, FormError, Input, Select, Textarea } from "@/components/ui/field";
+import { Field, FormError, Input, Textarea } from "@/components/ui/field";
+import { MemberSelect } from "@/components/member-select";
 import { useIdentity } from "@/components/identity/identity-provider";
 
 type Props =
@@ -147,21 +148,13 @@ export function PickForm(props: Props) {
         htmlFor="pick-next"
         hint="Le aparecerá en la portada para que vaya preparando su canción."
       >
-        <Select
+        <MemberSelect
           id="pick-next"
+          members={candidates}
           value={values.next_presenter_id}
-          onChange={(event) => set("next_presenter_id", event.target.value)}
-          required
-        >
-          <option value="" disabled>
-            Elige a alguien del equipo…
-          </option>
-          {candidates.map((member) => (
-            <option key={member.id} value={member.id}>
-              {member.emoji} {member.name}
-            </option>
-          ))}
-        </Select>
+          onChange={(memberId) => set("next_presenter_id", memberId)}
+          placeholder="Elige a alguien del equipo…"
+        />
       </Field>
 
       <FormError message={error} />
